@@ -533,7 +533,7 @@
                 });
 
                 chavesEngenheiros.forEach(eng => {
-                    texto += `*\`${eng.toUpperCase()}\`*\n*${mesNome.charAt(0).toUpperCase() + mesNome.slice(1)}*\n`;
+                    texto += `* \` ${eng.toUpperCase()} \` *\n*${mesNome.charAt(0).toUpperCase() + mesNome.slice(1)}*\n`;
                     agrupadoEngenheiro[eng].forEach(item => {
                         if (item.pendentes) texto += `Terminar de preencher ${item.obra}: ${item.pendentes}\n`;
                         if (item.faltantes) texto += `Não foi criado ${item.obra}: ${item.faltantes}\n`;
