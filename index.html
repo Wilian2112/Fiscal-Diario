@@ -201,7 +201,6 @@
                 <p id="side-data" class="text-green-700 font-bold text-xs uppercase"></p>
             </div>
             <div class="flex gap-2">
-                <!-- BOTÃO DE ATUALIZAR (REQUERIDO) -->
                 <button onclick="refreshCurrentDetail()" title="Atualizar dados do dia" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-green-700 hover:bg-green-50 transition-all shadow-sm">
                     <i id="sync-icon-detail" class="fas fa-sync-alt"></i>
                 </button>
@@ -296,7 +295,6 @@
         let selectedStatus = 'todos';
         let globalSearchTerm = "";
 
-        // Contexto para atualização individual da aba lateral
         let currentOpenObraId = null;
         let currentOpenReportId = null;
 
@@ -490,11 +488,24 @@
                     }
                 });
 
+                // LÓGICA DE DATA BASEADA NO MES VISÍVEL NO CALENDÁRIO
                 const mesVisivel = globalViewDate.getMonth();
                 const anoVisivel = globalViewDate.getFullYear();
                 const hoje = new Date();
                 const ultimoDiaNoMes = new Date(anoVisivel, mesVisivel + 1, 0).getDate();
-                const diaLimite = (anoVisivel === hoje.getFullYear() && mesVisivel === hoje.getMonth()) ? hoje.getDate() : ultimoDiaNoMes;
+                
+                // Determina o limite de checagem:
+                let diaLimite;
+                const dataVisivelRef = new Date(anoVisivel, mesVisivel, 1);
+                const dataHojeRef = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+
+                if (dataVisivelRef < dataHojeRef) {
+                    diaLimite = ultimoDiaNoMes; // Mes passado: checa ate o fim
+                } else if (dataVisivelRef.getTime() === dataHojeRef.getTime()) {
+                    diaLimite = hoje.getDate(); // Mes atual: checa ate hoje
+                } else {
+                    diaLimite = 0; // Futuro: nao checa
+                }
 
                 const agrupadoEngenheiro = {};
 
@@ -514,10 +525,12 @@
                     if (!agrupadoEngenheiro[engNome]) agrupadoEngenheiro[engNome] = [];
                     const pendentes = [], faltantes = [];
                     const relsPorDia = {};
+                    
                     res.relsMes.forEach(r => {
                         const d = parseDateSafely(r.data);
                         if (d && d.getMonth() === mesVisivel && d.getFullYear() === anoVisivel) relsPorDia[d.getDate()] = r;
                     });
+
                     for (let d = 1; d <= diaLimite; d++) {
                         const rel = relsPorDia[d];
                         if (!rel) {
@@ -536,7 +549,7 @@
                     }
                 });
 
-                const mesNome = globalViewDate.toLocaleString('pt-br', { month: 'long' });
+                const mesNome = globalViewDate.toLocaleString('pt-br', { month: 'long', year: 'numeric' });
                 let texto = "";
                 
                 const chavesEngenheiros = Object.keys(agrupadoEngenheiro).sort((a, b) => {
@@ -554,7 +567,7 @@
                     });
                     texto += `\n`;
                 });
-                container.innerText = texto || "✅ Nenhuma pendência encontrada!";
+                container.innerText = texto || "✅ Nenhuma pendência encontrada para o período!";
             } catch (e) { 
                 container.innerText = "Erro ao buscar dados."; 
                 console.error(e);
@@ -573,8 +586,7 @@
             const a = document.createElement('a');
             a.href = url;
             const hoje = new Date();
-            const dia = hoje.getDate();
-            a.download = `Pendencias_Pacopedra_${dia}.txt`;
+            a.download = `Pendencias_Pacopedra_${hoje.toLocaleDateString().replace(/\//g,'-')}.txt`;
             a.click();
             window.URL.revokeObjectURL(url);
         }
@@ -828,7 +840,6 @@
         }
 
         async function openDetails(obraId, nomeObra, dia, mes, ano, reportId) {
-            // Salva o contexto atual para refresh individual
             currentOpenObraId = obraId;
             currentOpenReportId = reportId;
 
@@ -847,11 +858,9 @@
                 document.getElementById('side-content').innerHTML = `<div class="flex flex-col items-center justify-center py-20"><div class="w-8 h-8 border-4 border-green-700 border-t-transparent rounded-full animate-spin mb-4"></div><span class="text-[9px] font-black uppercase">Carregando dados técnicos...</span></div>`; 
             }
 
-            // Realiza a atualização automática ao abrir
             await refreshCurrentDetail(true);
         }
 
-        // FUNÇÃO DE ATUALIZAÇÃO INDIVIDUAL DA ABA LATERAL
         async function refreshCurrentDetail(isSilent = false) {
             if (!currentOpenObraId || !currentOpenReportId) return;
 
@@ -863,7 +872,6 @@
                 if (det && !det.error) { 
                     reportDetailsCache[currentOpenReportId] = det; 
                     renderDetailsContent(det); 
-                    // Atualiza a listra visualmente no calendário caso tenha mudado ocorrências
                     injectStripe(currentOpenObraId, det);
                 }
             } catch (e) { 
