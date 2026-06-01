@@ -20,7 +20,7 @@
                         primary: { 
                             50: '#f0fdf4',
                             100: '#dcfce7',
-                            600: '#15803d', // Verde Pacopedra
+                            600: '#15803d',
                             700: '#166534',
                             900: '#064e3b'
                         }
@@ -456,10 +456,7 @@
             try {
                 const respPlanilha = await fetch(LINK_PLANILHA_CSV + "&cache_buster=" + Date.now(), {
                     cache: "no-store",
-                    headers: {
-                        'Cache-Control': 'no-cache',
-                        'Pragma': 'no-cache'
-                    }
+                    headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
                 });
                 
                 const csvText = await respPlanilha.text();
@@ -502,25 +499,45 @@
                     }
 
                     if (!agrupadoEngenheiro[engNome]) agrupadoEngenheiro[engNome] = [];
-                    const pendentes = [], faltantes = [];
-                    const relsPorDia = {};
+                    
+                    const diasPreenchidos = new Set();
+                    const diasPendentes = new Set();
+
+                    // CORREÇÃO: Mapeia todos os dias ocupados por relatórios (considerando dataFim)
                     res.relsMes.forEach(r => {
-                        const d = parseDateSafely(r.data);
-                        if (d && d.getMonth() === mesVisivel && d.getFullYear() === anoVisivel) relsPorDia[d.getDate()] = r;
+                        let dIn = parseDateSafely(r.data);
+                        let dOut = r.dataFim ? parseDateSafely(r.dataFim) : dIn;
+                        if (dIn) {
+                            let curr = new Date(dIn);
+                            // Limite de segurança de 31 dias para evitar loop infinito
+                            let loopLimit = 0;
+                            while (curr <= dOut && loopLimit < 32) {
+                                if (curr.getMonth() === mesVisivel && curr.getFullYear() === anoVisivel) {
+                                    const diaNum = curr.getDate();
+                                    diasPreenchidos.add(diaNum);
+                                    if (r.status.id === 1) diasPendentes.add(diaNum);
+                                }
+                                curr.setDate(curr.getDate() + 1);
+                                loopLimit++;
+                            }
+                        }
                     });
+
+                    const faltantes = [];
                     for (let d = 1; d <= diaLimite; d++) {
-                        const rel = relsPorDia[d];
-                        if (!rel) {
+                        if (!diasPreenchidos.has(d)) {
                             const dataTeste = new Date(anoVisivel, mesVisivel, d);
+                            // Só conta como falta se for dia útil
                             if (dataTeste.getDay() !== 0 && dataTeste.getDay() !== 6) faltantes.push(d);
-                        } else if (rel.status.id === 1) {
-                            pendentes.push(d);
                         }
                     }
-                    if (pendentes.length > 0 || faltantes.length > 0) {
+
+                    const listaPendentes = Array.from(diasPendentes);
+
+                    if (listaPendentes.length > 0 || faltantes.length > 0) {
                         agrupadoEngenheiro[engNome].push({
                             obra: res.obra.nome.toUpperCase(),
-                            pendentes: formatarIntervalos(pendentes, mesVisivel, anoVisivel),
+                            pendentes: formatarIntervalos(listaPendentes, mesVisivel, anoVisivel),
                             faltantes: formatarIntervalos(faltantes, mesVisivel, anoVisivel)
                         });
                     }
@@ -563,8 +580,7 @@
             const a = document.createElement('a');
             a.href = url;
             const hoje = new Date();
-            const dia = hoje.getDate();
-            a.download = `Pendencias_Pacopedra_${dia}.txt`;
+            a.download = `Pendencias_Pacopedra_${hoje.getDate()}.txt`;
             a.click();
             window.URL.revokeObjectURL(url);
         }
@@ -615,8 +631,10 @@
             if (isSilent) { syncIcon.classList.add('sync-spinning'); } 
             else { document.getElementById('loader').style.display = 'block'; document.getElementById('global-month-label').innerText = 'CARREGANDO...'; }
             
-            const inicioReq = "2022-01-01";
-            const fimReq = new Date(now.getFullYear(), 11, 31).toISOString().split('T')[0];
+            // Otimização: Carrega apenas a partir do início do ano atual para ser mais rápido
+            const anoAtual = new Date().getFullYear();
+            const inicioReq = `${anoAtual}-01-01`;
+            const fimReq = `${anoAtual}-12-31`;
 
             const responseObras = await apiCall('/obras');
             if (Array.isArray(responseObras)) {
@@ -631,7 +649,7 @@
             }
 
             const results = await Promise.all(todasObras.map(async (obra) => {
-                const relsList = await apiCall(`/obras/${obra._id}/relatorios?dataInicio=${inicioReq}&dataFim=${fimReq}&limite=1500`);
+                const relsList = await apiCall(`/obras/${obra._id}/relatorios?dataInicio=${inicioReq}&dataFim=${fimReq}&limite=1000`);
                 return { obra, relsMes: Array.isArray(relsList) ? relsList : [] };
             }));
 
