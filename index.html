@@ -488,23 +488,21 @@
                     }
                 });
 
-                // LÓGICA DE DATA BASEADA NO MES VISÍVEL NO CALENDÁRIO
                 const mesVisivel = globalViewDate.getMonth();
                 const anoVisivel = globalViewDate.getFullYear();
                 const hoje = new Date();
                 const ultimoDiaNoMes = new Date(anoVisivel, mesVisivel + 1, 0).getDate();
                 
-                // Determina o limite de checagem:
                 let diaLimite;
                 const dataVisivelRef = new Date(anoVisivel, mesVisivel, 1);
                 const dataHojeRef = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
 
                 if (dataVisivelRef < dataHojeRef) {
-                    diaLimite = ultimoDiaNoMes; // Mes passado: checa ate o fim
+                    diaLimite = ultimoDiaNoMes;
                 } else if (dataVisivelRef.getTime() === dataHojeRef.getTime()) {
-                    diaLimite = hoje.getDate(); // Mes atual: checa ate hoje
+                    diaLimite = hoje.getDate();
                 } else {
-                    diaLimite = 0; // Futuro: nao checa
+                    diaLimite = 0;
                 }
 
                 const agrupadoEngenheiro = {};
@@ -526,9 +524,23 @@
                     const pendentes = [], faltantes = [];
                     const relsPorDia = {};
                     
+                    // CORREÇÃO: Percorrer todo o período de cada relatório para marcar os dias ocupados
                     res.relsMes.forEach(r => {
-                        const d = parseDateSafely(r.data);
-                        if (d && d.getMonth() === mesVisivel && d.getFullYear() === anoVisivel) relsPorDia[d.getDate()] = r;
+                        let dIn = parseDateSafely(r.data);
+                        let dOut = r.dataFim ? parseDateSafely(r.dataFim) : dIn;
+                        
+                        if (dIn) {
+                            let curr = new Date(dIn);
+                            // Limite de segurança para evitar loops infinitos caso a data fim seja inválida
+                            let seguranca = 0;
+                            while (curr <= dOut && seguranca < 31) {
+                                if (curr.getMonth() === mesVisivel && curr.getFullYear() === anoVisivel) {
+                                    relsPorDia[curr.getDate()] = r;
+                                }
+                                curr.setDate(curr.getDate() + 1);
+                                seguranca++;
+                            }
+                        }
                     });
 
                     for (let d = 1; d <= diaLimite; d++) {
@@ -637,8 +649,10 @@
             if (isSilent) { syncIcon.classList.add('sync-spinning'); } 
             else { document.getElementById('loader').style.display = 'block'; document.getElementById('global-month-label').innerText = 'CARREGANDO...'; }
             
-            const inicioReq = "2022-01-01";
-            const fimReq = new Date(now.getFullYear(), 11, 31).toISOString().split('T')[0];
+            // MELHORIA DE VELOCIDADE: Busca apenas relatórios do ano atual em diante
+            const currentYear = new Date().getFullYear();
+            const inicioReq = `${currentYear}-01-01`;
+            const fimReq = `${currentYear}-12-31`;
 
             const responseObras = await apiCall('/obras');
             if (Array.isArray(responseObras)) {
@@ -868,11 +882,11 @@
             syncIcon.classList.add('sync-spinning');
 
             try {
-                let det = await apiCall(`/obras/${currentOpenObraId}/relatorios/${currentOpenReportId}`);
+                let det = await apiCall(`/obras/${currentOpenOpenObraId}/relatorios/${currentOpenReportId}`);
                 if (det && !det.error) { 
                     reportDetailsCache[currentOpenReportId] = det; 
                     renderDetailsContent(det); 
-                    injectStripe(currentOpenObraId, det);
+                    injectStripe(currentOpenOpenObraId, det);
                 }
             } catch (e) { 
                 console.error("Erro ao carregar detalhes", e); 
