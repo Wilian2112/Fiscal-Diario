@@ -200,9 +200,14 @@
                 <div id="side-obra-link-container" class="inline-block"></div>
                 <p id="side-data" class="text-green-700 font-bold text-xs uppercase"></p>
             </div>
-            <button onclick="closeDetails()" class="w-10 h-10 flex items-center justify-center rounded-full bg-white border shadow-sm hover:bg-gray-100 transition-all">
-                <i class="fas fa-times"></i>
-            </button>
+            <div class="flex items-center gap-2">
+                <button id="side-refresh-btn" title="Atualizar dados do dia" class="w-10 h-10 flex items-center justify-center rounded-full bg-white border shadow-sm hover:bg-gray-100 transition-all text-green-700">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+                <button onclick="closeDetails()" class="w-10 h-10 flex items-center justify-center rounded-full bg-white border shadow-sm hover:bg-gray-100 transition-all">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
         </div>
         <div id="side-content" class="flex-grow overflow-y-auto custom-scroll p-8"></div>
     </div>
@@ -503,13 +508,11 @@
                     const diasPreenchidos = new Set();
                     const diasPendentes = new Set();
 
-                    // CORREÇÃO: Mapeia todos os dias ocupados por relatórios (considerando dataFim)
                     res.relsMes.forEach(r => {
                         let dIn = parseDateSafely(r.data);
                         let dOut = r.dataFim ? parseDateSafely(r.dataFim) : dIn;
                         if (dIn) {
                             let curr = new Date(dIn);
-                            // Limite de segurança de 31 dias para evitar loop infinito
                             let loopLimit = 0;
                             while (curr <= dOut && loopLimit < 32) {
                                 if (curr.getMonth() === mesVisivel && curr.getFullYear() === anoVisivel) {
@@ -527,7 +530,6 @@
                     for (let d = 1; d <= diaLimite; d++) {
                         if (!diasPreenchidos.has(d)) {
                             const dataTeste = new Date(anoVisivel, mesVisivel, d);
-                            // Só conta como falta se for dia útil
                             if (dataTeste.getDay() !== 0 && dataTeste.getDay() !== 6) faltantes.push(d);
                         }
                     }
@@ -631,7 +633,6 @@
             if (isSilent) { syncIcon.classList.add('sync-spinning'); } 
             else { document.getElementById('loader').style.display = 'block'; document.getElementById('global-month-label').innerText = 'CARREGANDO...'; }
             
-            // Otimização: Carrega apenas a partir do início do ano atual para ser mais rápido
             const anoAtual = new Date().getFullYear();
             const inicioReq = `${anoAtual}-01-01`;
             const fimReq = `${anoAtual}-12-31`;
@@ -666,14 +667,23 @@
             const mesNome = globalViewDate.toLocaleString('pt-br', { month: 'long' });
             const ano = globalViewDate.getFullYear();
             document.getElementById('global-month-label').innerText = `${mesNome} ${ano}`;
-            const isAtLimit = (ano === now.getFullYear() && globalViewDate.getMonth() === now.getMonth());
+            
+            // Correção da navegação: Compara apenas mês e ano
+            const nowMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            const viewMonth = new Date(globalViewDate.getFullYear(), globalViewDate.getMonth(), 1);
+            
+            const isAtLimit = (viewMonth >= nowMonth);
             document.getElementById('global-next-btn').disabled = isAtLimit;
         }
 
         function changeGlobalMonth(offset) {
             const newDate = new Date(globalViewDate);
             newDate.setMonth(newDate.getMonth() + offset);
-            if (newDate > new Date()) return;
+            
+            // Limite: Não permite avançar além do mês atual
+            const todayLimit = new Date(now.getFullYear(), now.getMonth(), 1, 23, 59, 59);
+            if (offset > 0 && newDate > todayLimit) return;
+            
             globalViewDate = newDate;
             updateGlobalLabel();
             render();
@@ -826,13 +836,38 @@
             document.getElementById('side-data').innerText = displayDate;
             document.getElementById('side-overlay').classList.add('open');
             document.getElementById('side-panel').classList.add('open');
+            
+            // Configura o botão de Refresh específico para este relatório
+            document.getElementById('side-refresh-btn').onclick = () => refreshSpecificReport(obraId, reportId);
+
             const cache = reportDetailsCache[reportId];
             if (cache && cache.atividades) { renderDetailsContent(cache); } 
             else { document.getElementById('side-content').innerHTML = `<div class="flex flex-col items-center justify-center py-20"><div class="w-8 h-8 border-4 border-green-700 border-t-transparent rounded-full animate-spin mb-4"></div><span class="text-[9px] font-black uppercase">Carregando dados técnicos...</span></div>`; }
+            
             try {
                 let det = await apiCall(`/obras/${obraId}/relatorios/${reportId}`);
                 if (det && !det.error) { reportDetailsCache[reportId] = det; renderDetailsContent(det); }
             } catch (e) { console.error("Erro ao carregar detalhes", e); }
+        }
+
+        async function refreshSpecificReport(obraId, reportId) {
+            const btn = document.getElementById('side-refresh-btn');
+            const icon = btn.querySelector('i');
+            icon.classList.add('sync-spinning');
+            
+            try {
+                let det = await apiCall(`/obras/${obraId}/relatorios/${reportId}`);
+                if (det && !det.error) {
+                    reportDetailsCache[reportId] = det;
+                    renderDetailsContent(det);
+                } else {
+                    alert("Erro ao atualizar dados deste dia.");
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                icon.classList.remove('sync-spinning');
+            }
         }
 
         function renderDetailsContent(det) {
