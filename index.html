@@ -582,7 +582,8 @@
             const a = document.createElement('a');
             a.href = url;
             const hoje = new Date();
-            a.download = `Pendencias_Pacopedra_${hoje.getDate()}.txt`;
+            // NOME DO ARQUIVO ALTERADO CONFORME SOLICITADO
+            a.download = `DIA ${hoje.getDate()}.txt`;
             a.click();
             window.URL.revokeObjectURL(url);
         }
@@ -858,7 +859,6 @@
                     reportDetailsCache[reportId] = det;
                     renderDetailsContent(det);
                     
-                    // Lógica solicitada: Verifica ocorrências e atualiza a listra no calendário
                     const hasOcc = det.ocorrencias && det.ocorrencias.length > 0;
                     let dIn = parseDateSafely(det.data);
                     let dOut = det.dataFim ? parseDateSafely(det.dataFim) : dIn;
