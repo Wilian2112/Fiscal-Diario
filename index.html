@@ -668,7 +668,6 @@
             const ano = globalViewDate.getFullYear();
             document.getElementById('global-month-label').innerText = `${mesNome} ${ano}`;
             
-            // Correção da navegação: Compara apenas mês e ano
             const nowMonth = new Date(now.getFullYear(), now.getMonth(), 1);
             const viewMonth = new Date(globalViewDate.getFullYear(), globalViewDate.getMonth(), 1);
             
@@ -680,7 +679,6 @@
             const newDate = new Date(globalViewDate);
             newDate.setMonth(newDate.getMonth() + offset);
             
-            // Limite: Não permite avançar além do mês atual
             const todayLimit = new Date(now.getFullYear(), now.getMonth(), 1, 23, 59, 59);
             if (offset > 0 && newDate > todayLimit) return;
             
@@ -837,7 +835,6 @@
             document.getElementById('side-overlay').classList.add('open');
             document.getElementById('side-panel').classList.add('open');
             
-            // Configura o botão de Refresh específico para este relatório
             document.getElementById('side-refresh-btn').onclick = () => refreshSpecificReport(obraId, reportId);
 
             const cache = reportDetailsCache[reportId];
@@ -860,6 +857,11 @@
                 if (det && !det.error) {
                     reportDetailsCache[reportId] = det;
                     renderDetailsContent(det);
+                    
+                    // Se houver ocorrências, lança a listra no calendário instantaneamente
+                    if (det.ocorrencias && det.ocorrencias.length > 0) {
+                        injectStripe(obraId, det);
+                    }
                 } else {
                     alert("Erro ao atualizar dados deste dia.");
                 }
