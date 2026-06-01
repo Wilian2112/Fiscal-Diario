@@ -858,9 +858,30 @@
                     reportDetailsCache[reportId] = det;
                     renderDetailsContent(det);
                     
-                    // Se houver ocorrências, lança a listra no calendário instantaneamente
-                    if (det.ocorrencias && det.ocorrencias.length > 0) {
-                        injectStripe(obraId, det);
+                    // Lógica solicitada: Verifica ocorrências e atualiza a listra no calendário
+                    const hasOcc = det.ocorrencias && det.ocorrencias.length > 0;
+                    let dIn = parseDateSafely(det.data);
+                    let dOut = det.dataFim ? parseDateSafely(det.dataFim) : dIn;
+                    
+                    if (dIn) {
+                        let curr = new Date(dIn);
+                        let loopLimit = 0;
+                        while (curr <= dOut && loopLimit < 32) {
+                            const dataIdFormat = `${curr.getDate().toString().padStart(2,'0')}-${(curr.getMonth()+1).toString().padStart(2,'0')}-${curr.getFullYear()}`;
+                            const dayEl = document.getElementById(`day-${obraId}-${dataIdFormat}`);
+                            if (dayEl) {
+                                const stripe = dayEl.querySelector('.stripe-alert');
+                                if (hasOcc && !stripe) {
+                                    const s = document.createElement('div');
+                                    s.className = 'stripe-alert';
+                                    dayEl.appendChild(s);
+                                } else if (!hasOcc && stripe) {
+                                    stripe.remove();
+                                }
+                            }
+                            curr.setDate(curr.getDate() + 1);
+                            loopLimit++;
+                        }
                     }
                 } else {
                     alert("Erro ao atualizar dados deste dia.");
