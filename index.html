@@ -655,7 +655,13 @@
         function changeGlobalMonth(offset) {
             const newDate = new Date(globalViewDate);
             newDate.setMonth(newDate.getMonth() + offset);
-            if (newDate > new Date()) return;
+            
+            // Fix: Compara Mês/Ano ignorando o horário
+            const limitDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            const targetDate = new Date(newDate.getFullYear(), newDate.getMonth(), 1);
+
+            if (targetDate > limitDate) return;
+            
             globalViewDate = newDate;
             updateGlobalLabel();
             render();
