@@ -497,7 +497,7 @@
                     if (!selectedObraIds.has(res.obra._id)) return;
 
                     const nomeObraNorm = normalizeString(res.obra.nome);
-                    let engNome = "Engenheiro não encontrado";
+                    let engNome = "SEM ENGENHEIRO";
 
                     for (let obraPlanilha in mapaEngenheiros) {
                         if (nomeObraNorm.includes(obraPlanilha) || obraPlanilha.includes(nomeObraNorm)) {
@@ -552,7 +552,7 @@
                 let texto = "";
                 
                 const chavesEngenheiros = Object.keys(agrupadoEngenheiro).sort((a, b) => {
-                    const labelNaoEncontrado = "Engenheiro não encontrado";
+                    const labelNaoEncontrado = "SEM ENGENHEIRO";
                     if (a === labelNaoEncontrado) return 1;
                     if (b === labelNaoEncontrado) return -1;
                     return a.localeCompare(b);
