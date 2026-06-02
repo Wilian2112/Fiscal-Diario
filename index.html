@@ -199,12 +199,14 @@
     </div>
 
     <!-- NOTIFICAÇÃO DE SUCESSO (TOAST) -->
-    <div id="toast-copiado" class="fixed top-10 left-1/2 -translate-x-1/2 z-[300] hidden">
-        <div class="bg-emerald-600 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-4 animate-in fade-in slide-in-from-top-5 duration-300 border border-emerald-500/20">
-            <div class="bg-white/20 w-8 h-8 rounded-full flex items-center justify-center"><i class="fas fa-check text-sm"></i></div>
-            <span class="text-[10px] font-black uppercase tracking-[0.2em]">Texto copiado com sucesso!</span>
+<div id="toast-sucesso" class="fixed top-10 left-1/2 -translate-x-1/2 z-[300] hidden">
+    <div class="bg-emerald-600 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-4 animate-in fade-in slide-in-from-top-5 duration-300 border border-emerald-500/20">
+        <div class="bg-white/20 w-8 h-8 rounded-full flex items-center justify-center">
+            <i class="fas fa-check text-sm"></i>
         </div>
+        <span id="toast-text" class="text-[10px] font-black uppercase tracking-[0.2em]">Sucesso!</span>
     </div>
+</div>
 
     <!-- PAINEL LATERAL -->
     <div id="side-overlay" onclick="closeDetails()" class="side-overlay fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100]"></div>
@@ -589,35 +591,40 @@
             }
         }
 
-        function copiarTextoWhatsApp() {
-    const texto = document.getElementById('container-texto-whatsapp').innerText;
+        // Função auxiliar para mostrar o aviso
+function mostrarAviso(mensagem) {
+    const toast = document.getElementById('toast-sucesso');
+    const toastText = document.getElementById('toast-text');
     
+    toastText.innerText = mensagem;
+    toast.classList.remove('hidden');
+    
+    setTimeout(() => {
+        toast.classList.add('hidden');
+    }, 3000);
+}
+
+function copiarTextoWhatsApp() {
+    const texto = document.getElementById('container-texto-whatsapp').innerText;
     navigator.clipboard.writeText(texto).then(() => {
-        const toast = document.getElementById('toast-copiado');
-        
-        // Mostra o alerta
-        toast.classList.remove('hidden');
-        
-        // Esconde automaticamente após 3 segundos
-        setTimeout(() => {
-            toast.classList.add('hidden');
-        }, 3000);
-    }).catch(err => {
-        console.error('Erro ao copiar: ', err);
+        mostrarAviso("TEXTO COPIADO COM SUCESSO!");
     });
 }
 
-        function downloadTextoPendencias() {
-            const texto = document.getElementById('container-texto-whatsapp').innerText;
-            const blob = new Blob([texto], { type: 'text/plain' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            const hoje = new Date();
-            a.download = `DIA ${hoje.getDate()}.txt`;
-            a.click();
-            window.URL.revokeObjectURL(url);
-        }
+function downloadTextoPendencias() {
+    const texto = document.getElementById('container-texto-whatsapp').innerText;
+    const blob = new Blob([texto], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const hoje = new Date();
+    a.download = `DIA ${hoje.getDate()}.txt`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    
+    // Mostra o aviso de download
+    mostrarAviso("DOWNLOAD CONCLUÍDO!");
+}
 
         function fecharModalPendencias() { unlockScroll(); document.getElementById('modal-pendencias').classList.add('hidden'); }
 
