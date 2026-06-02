@@ -123,17 +123,24 @@
 
     <!-- LOGIN POP-UP -->
     <div id="login-overlay" class="fixed inset-0 z-[200] flex items-center justify-center overflow-hidden">
-        <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md p-10 m-4 text-center relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-2 bg-green-700"></div>
-            <div class="inline-flex items-center justify-center w-20 h-20 bg-green-50 text-green-700 rounded-3xl mb-6">
-                <i class="fas fa-hard-hat text-4xl"></i>
-            </div>
-            <h2 class="text-3xl font-black text-gray-900 tracking-tight mb-2">Acesso Restrito</h2>
-            <p class="text-gray-500 mb-8 font-medium">Insira o Token JWT Pacopedra.</p>
-            <input type="password" id="popup-token" class="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none mb-6 font-mono text-center tracking-widest" placeholder="TOKEN JWT">
-            <button onclick="realizarLogin()" class="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-5 rounded-2xl shadow-xl transition-all active:scale-95 uppercase tracking-widest">Acessar Painel</button>
+    <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md p-10 m-4 text-center relative overflow-hidden">
+        
+        <div class="inline-flex items-center justify-center mb-8">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRmHLLhhzqVAzvECxD7HCqYHK4Znpr3kQvwYg&s" 
+                alt="Logo Pacopedra" 
+                class="h-20 w-auto object-contain">
         </div>
+        <h2 class="text-3xl font-black text-gray-900 tracking-tight mb-2">Acesso Restrito</h2>
+        <p class="text-gray-500 mb-8 font-medium">Insira o Token de Acesso Pacopedra.</p>
+
+        <!-- NOVO: AVISO DE ERRO INTERNO -->
+        <div id="login-error" class="hidden mb-6 bg-red-50 border border-red-100 text-red-600 p-4 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 animate-bounce">
+            <i class="fas fa-exclamation-triangle"></i> Por favor, insira o token.
+        </div>
+        <input type="password" id="popup-token" class="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none mb-6 font-mono text-center tracking-widest focus:border-green-700 transition-all" placeholder="TOKEN JWT">
+        <button onclick="realizarLogin()" class="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-5 rounded-2xl shadow-xl transition-all active:scale-95 uppercase tracking-widest">Acessar Painel</button>
     </div>
+</div>
 
     <!-- MODAL SELEÇÃO DE OBRAS -->
     <div id="modal-selecao-obras" class="fixed inset-0 z-[160] hidden modal-base flex items-center justify-center p-4">
@@ -596,13 +603,27 @@
         function toggleStatusDropdown() { document.getElementById('status-dropdown').classList.toggle('open'); }
 
         function realizarLogin() {
-            const token = document.getElementById('popup-token').value.trim();
-            if (!token) return alert("Insira o token.");
-            sessionStorage.setItem('diario_token', token);
-            document.getElementById('login-overlay').style.display = 'none';
-            unlockScroll();
-            iniciarSincronizacao();
-        }
+    const input = document.getElementById('popup-token');
+    const errorMsg = document.getElementById('login-error');
+    const token = input.value.trim();
+
+    if (!token) {
+        // Mostra o erro e destaca o campo
+        errorMsg.classList.remove('hidden');
+        input.classList.add('border-red-500', 'bg-red-50');
+        input.focus();
+        return;
+    }
+
+    // Se tiver token, esconde o erro e prossegue
+    errorMsg.classList.add('hidden');
+    input.classList.remove('border-red-500', 'bg-red-50');
+    
+    sessionStorage.setItem('diario_token', token);
+    document.getElementById('login-overlay').style.display = 'none';
+    unlockScroll();
+    iniciarSincronizacao();
+}
         
         function sair() { sessionStorage.removeItem('diario_token'); location.reload(); }
 
