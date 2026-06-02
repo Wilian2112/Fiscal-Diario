@@ -602,27 +602,57 @@
 
         function toggleStatusDropdown() { document.getElementById('status-dropdown').classList.toggle('open'); }
 
-        function realizarLogin() {
+        async function realizarLogin() {
     const input = document.getElementById('popup-token');
     const errorMsg = document.getElementById('login-error');
+    const btn = event.target; // Captura o botão clicado
     const token = input.value.trim();
 
+    // 1. Verifica se o campo está vazio
     if (!token) {
-        // Mostra o erro e destaca o campo
+        errorMsg.innerText = "Por favor, insira o token.";
         errorMsg.classList.remove('hidden');
         input.classList.add('border-red-500', 'bg-red-50');
         input.focus();
         return;
     }
 
-    // Se tiver token, esconde o erro e prossegue
-    errorMsg.classList.add('hidden');
-    input.classList.remove('border-red-500', 'bg-red-50');
-    
-    sessionStorage.setItem('diario_token', token);
-    document.getElementById('login-overlay').style.display = 'none';
-    unlockScroll();
-    iniciarSincronizacao();
+    // Estado de carregamento no botão
+    const originalText = btn.innerText;
+    btn.innerText = "VALIDANDO...";
+    btn.disabled = true;
+
+    try {
+        // 2. Tenta uma chamada simples na API para ver se o token é real
+        const response = await fetch(`${API_ENDPOINT}/empresa`, { 
+            headers: { 'token': token, 'Content-Type': 'application/json' } 
+        });
+        const data = await response.json();
+
+        // 3. Se a API retornar erro ou não retornar o ID da empresa, o token é inválido
+        if (response.status !== 200 || !data._id) {
+            throw new Error("Invalido");
+        }
+
+        // Se chegou aqui, o token é válido
+        errorMsg.classList.add('hidden');
+        input.classList.remove('border-red-500', 'bg-red-50');
+        sessionStorage.setItem('diario_token', token);
+        document.getElementById('login-overlay').style.display = 'none';
+        unlockScroll();
+        iniciarSincronizacao();
+
+    } catch (e) {
+        // Exibe erro de token inválido
+        errorMsg.innerText = "Token inválido ou expirado.";
+        errorMsg.classList.remove('hidden');
+        input.classList.add('border-red-500', 'bg-red-50');
+        input.value = ""; // Limpa o campo
+        input.focus();
+    } finally {
+        btn.innerText = originalText;
+        btn.disabled = false;
+    }
 }
         
         function sair() { sessionStorage.removeItem('diario_token'); location.reload(); }
