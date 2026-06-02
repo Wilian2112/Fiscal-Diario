@@ -582,7 +582,6 @@
             const a = document.createElement('a');
             a.href = url;
             const hoje = new Date();
-            // NOME DO ARQUIVO ALTERADO CONFORME SOLICITADO
             a.download = `DIA ${hoje.getDate()}.txt`;
             a.click();
             window.URL.revokeObjectURL(url);
@@ -709,11 +708,14 @@
                 });
                 relsInteresse.forEach(r => {
                     const fetchTask = async () => {
-                        if (reportDetailsCache[r._id]) { if (reportDetailsCache[r._id].ocorrencias?.length > 0) injectStripe(res.obra._id, r); return; }
+                        if (reportDetailsCache[r._id]) { 
+                            updateDayStripeUI(res.obra._id, r, reportDetailsCache[r._id].ocorrencias?.length > 0); 
+                            return; 
+                        }
                         const det = await apiCall(`/obras/${res.obra._id}/relatorios/${r._id}`);
                         if (det && !det.error) {
                             reportDetailsCache[r._id] = det;
-                            if (det.ocorrencias?.length > 0) injectStripe(res.obra._id, r);
+                            updateDayStripeUI(res.obra._id, r, det.ocorrencias?.length > 0);
                         }
                     };
                     syncPromises.push(fetchTask());
@@ -722,7 +724,7 @@
             for (let i = 0; i < syncPromises.length; i += 10) { await Promise.all(syncPromises.slice(i, i + 10)); }
         }
 
-        function injectStripe(obraId, relatorio) {
+        function updateDayStripeUI(obraId, relatorio, hasOccurrences) {
             let dIn = parseDateSafely(relatorio.data);
             let dOut = relatorio.dataFim ? parseDateSafely(relatorio.dataFim) : dIn;
             if (!dIn) return;
@@ -731,10 +733,15 @@
             while (curr <= dOut && limit < 32) {
                 const dataIdFormat = `${curr.getDate().toString().padStart(2,'0')}-${(curr.getMonth()+1).toString().padStart(2,'0')}-${curr.getFullYear()}`;
                 const dayEl = document.getElementById(`day-${obraId}-${dataIdFormat}`);
-                if (dayEl && !dayEl.querySelector('.stripe-alert')) {
-                    const stripe = document.createElement('div');
-                    stripe.className = 'stripe-alert';
-                    dayEl.appendChild(stripe);
+                if (dayEl) {
+                    const stripe = dayEl.querySelector('.stripe-alert');
+                    if (hasOccurrences && !stripe) {
+                        const s = document.createElement('div');
+                        s.className = 'stripe-alert';
+                        dayEl.appendChild(s);
+                    } else if (!hasOccurrences && stripe) {
+                        stripe.remove();
+                    }
                 }
                 curr.setDate(curr.getDate() + 1); limit++;
             }
@@ -859,30 +866,8 @@
                     reportDetailsCache[reportId] = det;
                     renderDetailsContent(det);
                     
-                    const hasOcc = det.ocorrencias && det.ocorrencias.length > 0;
-                    let dIn = parseDateSafely(det.data);
-                    let dOut = det.dataFim ? parseDateSafely(det.dataFim) : dIn;
-                    
-                    if (dIn) {
-                        let curr = new Date(dIn);
-                        let loopLimit = 0;
-                        while (curr <= dOut && loopLimit < 32) {
-                            const dataIdFormat = `${curr.getDate().toString().padStart(2,'0')}-${(curr.getMonth()+1).toString().padStart(2,'0')}-${curr.getFullYear()}`;
-                            const dayEl = document.getElementById(`day-${obraId}-${dataIdFormat}`);
-                            if (dayEl) {
-                                const stripe = dayEl.querySelector('.stripe-alert');
-                                if (hasOcc && !stripe) {
-                                    const s = document.createElement('div');
-                                    s.className = 'stripe-alert';
-                                    dayEl.appendChild(s);
-                                } else if (!hasOcc && stripe) {
-                                    stripe.remove();
-                                }
-                            }
-                            curr.setDate(curr.getDate() + 1);
-                            loopLimit++;
-                        }
-                    }
+                    // Sincroniza a listra no calendário no mesmo momento da atualização
+                    updateDayStripeUI(obraId, det, det.ocorrencias?.length > 0);
                 } else {
                     alert("Erro ao atualizar dados deste dia.");
                 }
