@@ -280,7 +280,7 @@
     <script>
         const API_ENDPOINT = "https://apiexterna.diariodeobra.app/v1";
         const WEB_APP_BASE = "https://web.diariodeobra.app/#/app/obras/";
-        const LINK_PLANILHA_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTHuqRl2PKVevlkft9--54kJO91G5RIdFhAe9OGbSR1OIM8l4TD1B25cSlVDUxBVZBbFe4ivVySi_OA/pub?gid=0&single=true&output=csv";
+        const LINK_PLANILHA_CSV = "https://docs.google.com/spreadsheets/d/1TO_r3DB92WKXOOkrMnjxj-imROFvQ12WEvE98Tdtm6s/export?format=csv&gid=0";
         
         let cachedData = [];
         let todasObras = [];
@@ -456,9 +456,12 @@
             lockScroll();
             document.getElementById('modal-pendencias').classList.remove('hidden');
             const container = document.getElementById('container-texto-whatsapp');
-            container.innerText = "Gerando lista formatada...";
+            container.innerText = "Sincronizando dados atuais...";
 
             try {
+                // Sincroniza dados da API antes de gerar pendências
+                await iniciarSincronizacao(true);
+
                 const respPlanilha = await fetch(LINK_PLANILHA_CSV + "&cache_buster=" + Date.now(), {
                     cache: "no-store",
                     headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
