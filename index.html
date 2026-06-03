@@ -12,6 +12,11 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
 
+    <!-- Bibliotecas de Exportação -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
     <script>
         tailwind.config = {
             theme: {
@@ -319,7 +324,7 @@
 
     <!-- LOGIN POP-UP -->
     <div id="login-overlay" class="fixed inset-0 z-[200] flex items-center justify-center overflow-hidden">
-        <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md p-10 m-4 text-center relative overflow-hidden">
+        <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-md p-10 m-4 text-center relative overflow-hidden">
 
             <div class="inline-flex items-center justify-center mb-8">
                 <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRmHLLhhzqVAzvECxD7HCqYHK4Znpr3kQvwYg&s" alt="Logo Pacopedra" class="h-20 w-auto object-contain">
@@ -328,7 +333,6 @@
             <h2 class="text-3xl font-black text-gray-900 tracking-tight mb-2">Acesso Restrito</h2>
             <p class="text-gray-500 mb-8 font-medium"></p>
 
-            <!-- NOVO: AVISO DE ERRO INTERNO -->
             <div id="login-error" class="hidden mb-6 bg-red-50 border border-red-100 text-red-600 p-4 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 animate-bounce">
                 <i class="fas fa-exclamation-triangle"></i> Por favor, insira o token
             </div>
@@ -394,6 +398,47 @@
         </div>
     </div>
 
+    <!-- NOVO: MODAL DE EXPORTAÇÃO -->
+    <div id="modal-exportar" class="fixed inset-0 z-[160] hidden modal-base flex items-center justify-center p-4">
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-300">
+            <div class="p-6 border-b flex justify-between items-center bg-gray-50">
+                <h2 class="text-xl font-black uppercase tracking-tighter text-slate-700">Exportar Relatórios</h2>
+                <button onclick="fecharModalExportar()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="p-8 space-y-6">
+                <p class="text-xs text-gray-500 font-bold uppercase tracking-wider text-center">
+                    Selecione o formato para exportar os dados das <span class="text-green-700" id="export-count-obras">0</span> obras selecionadas do mês atual.
+                </p>
+                
+                <div class="grid grid-cols-1 gap-3">
+                    <button onclick="exportarRelatorios('pdf')" class="flex items-center justify-between p-4 bg-red-50 hover:bg-red-100 border border-red-100 rounded-2xl transition-all group text-left">
+                        <div class="flex items-center gap-4">
+                            <i class="fas fa-file-pdf text-2xl text-red-600"></i>
+                            <span class="font-black text-xs uppercase text-red-900">Documento PDF (.pdf)</span>
+                        </div>
+                        <i class="fas fa-chevron-right text-red-300 group-hover:translate-x-1 transition-transform"></i>
+                    </button>
+
+                    <button onclick="exportarRelatorios('xlsx')" class="flex items-center justify-between p-4 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 rounded-2xl transition-all group text-left">
+                        <div class="flex items-center gap-4">
+                            <i class="fas fa-file-excel text-2xl text-emerald-600"></i>
+                            <span class="font-black text-xs uppercase text-emerald-900">Planilha Excel (.xlsx)</span>
+                        </div>
+                        <i class="fas fa-chevron-right text-emerald-300 group-hover:translate-x-1 transition-transform"></i>
+                    </button>
+
+                    <button onclick="exportarRelatorios('csv')" class="flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 border border-gray-100 rounded-2xl transition-all group text-left">
+                        <div class="flex items-center gap-4">
+                            <i class="fas fa-file-csv text-2xl text-gray-600"></i>
+                            <span class="font-black text-xs uppercase text-gray-900">Arquivo CSV (.csv)</span>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-300 group-hover:translate-x-1 transition-transform"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- NOTIFICAÇÃO DE SUCESSO (TOAST) -->
     <div id="toast-sucesso" class="fixed top-10 left-1/2 -translate-x-1/2 z-[300] hidden">
         <div class="bg-emerald-600 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-4 animate-in fade-in slide-in-from-top-5 duration-300 border border-emerald-500/20">
@@ -447,6 +492,9 @@
             </div>
 
             <div class="flex items-center gap-2 shrink-0">
+                <button onclick="abrirModalExportar()" class="flex items-center gap-2 px-4 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-[10px] font-black transition-all border border-blue-100 uppercase">
+                    Exportar Mensal <i class="fas fa-file-export"></i>
+                </button>
                 <button onclick="abrirModalPendencias()" class="flex items-center gap-2 px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-[10px] font-black transition-all border border-emerald-100 uppercase">
                     Gerar Pendências <i class="fas fa-list-ul"></i>
                 </button>
@@ -615,6 +663,97 @@
             render();
         }
 
+        // FUNÇÕES DE EXPORTAÇÃO
+        function abrirModalExportar() {
+            lockScroll();
+            document.getElementById('export-count-obras').innerText = selectedObraIds.size;
+            document.getElementById('modal-exportar').classList.remove('hidden');
+        }
+
+        function fecharModalExportar() {
+            unlockScroll();
+            document.getElementById('modal-exportar').classList.add('hidden');
+        }
+
+        async function exportarRelatorios(formato) {
+            const mesVisivel = globalViewDate.getMonth();
+            const anoVisivel = globalViewDate.getFullYear();
+            const dadosExportacao = [];
+
+            cachedData.forEach(res => {
+                if (!selectedObraIds.has(res.obra._id)) return;
+
+                res.relsMes.forEach(rel => {
+                    const dataRel = parseDateSafely(rel.data);
+                    if (dataRel && dataRel.getMonth() === mesVisivel && dataRel.getFullYear() === anoVisivel) {
+                        
+                        const detalhes = reportDetailsCache[rel._id] || {};
+                        
+                        dadosExportacao.push({
+                            'OBRA': res.obra.nome.toUpperCase(),
+                            'DATA': dataRel.toLocaleDateString('pt-BR'),
+                            'STATUS': rel.status.descricao.toUpperCase(),
+                            'NÚMERO': rel.numero || '-',
+                            'RESPONSÁVEL': res.obra.responsavel || '-',
+                            'ATIVIDADES': detalhes.atividades?.map(a => `${a.descricao} (${a.porcentagem}%)`).join(' | ') || 'Dados não carregados no cache',
+                            'EFETIVO': (detalhes.maoDeObra?.padrao?.length || 0) + (detalhes.maoDeObra?.personalizada?.length || 0),
+                            'EQUIPAMENTOS': detalhes.equipamentos?.length || 0
+                        });
+                    }
+                });
+            });
+
+            if (dadosExportacao.length === 0) {
+                alert("Nenhum relatório encontrado para exportar neste período.");
+                return;
+            }
+
+            const nomeArquivo = `Pacopedra_Dashboard_${(mesVisivel + 1).toString().padStart(2, '0')}_${anoVisivel}`;
+
+            if (formato === 'xlsx') {
+                const ws = XLSX.utils.json_to_sheet(dadosExportacao);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Relatórios");
+                XLSX.writeFile(wb, `${nomeArquivo}.xlsx`);
+            } 
+            else if (formato === 'csv') {
+                const ws = XLSX.utils.json_to_sheet(dadosExportacao);
+                const csv = XLSX.utils.sheet_to_csv(ws);
+                const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csv], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = `${nomeArquivo}.csv`;
+                link.click();
+            } 
+            else if (formato === 'pdf') {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('l', 'pt', 'a4');
+                
+                doc.setFontSize(14);
+                doc.text("PACOPEDRA - RELATÓRIO MENSAL CONSOLIDADO", 40, 40);
+                doc.setFontSize(10);
+                doc.text(`Período: ${document.getElementById('global-month-label').innerText}`, 40, 55);
+
+                const headers = [Object.keys(dadosExportacao[0])];
+                const rows = dadosExportacao.map(obj => Object.values(obj));
+
+                doc.autoTable({
+                    head: headers,
+                    body: rows,
+                    startY: 70,
+                    theme: 'striped',
+                    headStyles: { fillStyle: '#15803d', fontSize: 8 },
+                    bodyStyles: { fontSize: 7 },
+                    margin: { top: 70 }
+                });
+
+                doc.save(`${nomeArquivo}.pdf`);
+            }
+
+            mostrarAviso("Exportação concluída!");
+            fecharModalExportar();
+        }
+
         function formatarIntervalos(dias, mes, ano) {
             if (dias.length === 0) return "";
             dias.sort((a, b) => a - b);
@@ -684,7 +823,6 @@
             container.innerText = "Sincronizando dados atuais...";
 
             try {
-                // Sincroniza dados da API antes de gerar pendências
                 await iniciarSincronizacao(true);
 
                 const respPlanilha = await fetch(LINK_PLANILHA_CSV + "&cache_buster=" + Date.now(), {
@@ -803,7 +941,6 @@
             }
         }
 
-        // Função auxiliar para mostrar o aviso
         function mostrarAviso(mensagem) {
             const toast = document.getElementById('toast-sucesso');
             const toastText = document.getElementById('toast-text');
@@ -835,8 +972,6 @@
             a.download = `DIA ${hoje.getDate()}.txt`;
             a.click();
             window.URL.revokeObjectURL(url);
-
-            // Mostra o aviso de download
             mostrarAviso("DOWNLOAD CONCLUÍDO!");
         }
 
@@ -852,10 +987,9 @@
         async function realizarLogin() {
             const input = document.getElementById('popup-token');
             const errorMsg = document.getElementById('login-error');
-            const btn = event.target; // Captura o botão clicado
+            const btn = event.target; 
             const token = input.value.trim();
 
-            // 1. Verifica se o campo está vazio
             if (!token) {
                 errorMsg.innerText = "Por favor, insira o token.";
                 errorMsg.classList.remove('hidden');
@@ -864,13 +998,11 @@
                 return;
             }
 
-            // Estado de carregamento no botão
             const originalText = btn.innerText;
             btn.innerText = "VALIDANDO...";
             btn.disabled = true;
 
             try {
-                // 2. Tenta uma chamada simples na API para ver se o token é real
                 const response = await fetch(`${API_ENDPOINT}/empresa`, {
                     headers: {
                         'token': token,
@@ -879,12 +1011,10 @@
                 });
                 const data = await response.json();
 
-                // 3. Se a API retornar erro ou não retornar o ID da empresa, o token é inválido
                 if (response.status !== 200 || !data._id) {
                     throw new Error("Invalido");
                 }
 
-                // Se chegou aqui, o token é válido
                 errorMsg.classList.add('hidden');
                 input.classList.remove('border-red-500', 'bg-red-50');
                 sessionStorage.setItem('diario_token', token);
@@ -893,21 +1023,15 @@
                 iniciarSincronizacao();
 
             } catch (e) {
-                // Exibe erro de token inválido
                 errorMsg.innerText = "Token inválido ou expirado.";
                 errorMsg.classList.remove('hidden');
                 input.classList.add('border-red-500', 'bg-red-50');
-                input.value = ""; // Limpa o campo
+                input.value = ""; 
                 input.focus();
             } finally {
                 btn.innerText = originalText;
                 btn.disabled = false;
             }
-        }
-
-        function sair() {
-            sessionStorage.removeItem('diario_token');
-            location.reload();
         }
 
         async function apiCall(path) {
@@ -1229,8 +1353,6 @@
                 if (det && !det.error) {
                     reportDetailsCache[reportId] = det;
                     renderDetailsContent(det);
-
-                    // Sincroniza a listra no calendário no mesmo momento da atualização
                     updateDayStripeUI(obraId, det, det.ocorrencias?.length > 0);
                 } else {
                     alert("Erro ao atualizar dados deste dia.");
