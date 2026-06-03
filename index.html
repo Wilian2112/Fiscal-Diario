@@ -264,7 +264,6 @@
             }
         }
 
-        /* NOVA ANIMAÇÃO DE TREMOR */
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             20%, 60% { transform: translateX(-8px); }
@@ -339,7 +338,6 @@
             <h2 class="text-3xl font-black text-gray-900 tracking-tight mb-2">Acesso Restrito</h2>
             <p class="text-gray-500 mb-8 font-medium"></p>
 
-            <!-- AVISO DE ERRO COM ID DE TEXTO E SEM O BOUNCE -->
             <div id="login-error" class="hidden mb-6 bg-red-50 border border-red-100 text-red-600 p-4 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2">
                 <i class="fas fa-exclamation-triangle"></i> <span id="error-text">Por favor, insira o token</span>
             </div>
@@ -867,12 +865,9 @@
             const dispararErro = (mensagem) => {
                 errorText.innerText = mensagem;
                 errorMsg.classList.remove('hidden');
-                
-                // Reset da animação para garantir o tremor em cada tentativa
                 errorMsg.classList.remove('animate-shake');
                 void errorMsg.offsetWidth; 
                 errorMsg.classList.add('animate-shake');
-
                 input.classList.add('border-red-500', 'bg-red-50');
                 input.focus();
             };
@@ -1281,9 +1276,21 @@
         }
 
         window.onclick = function(event) {
+            // Fecha Dropdown de Status
             if (!event.target.closest('.relative')) {
                 const drop = document.getElementById('status-dropdown');
                 if(drop) drop.classList.remove('open');
+            }
+
+            // LOGICA: Clique fora dos modais fecha-os (exceto login)
+            const modalSelecao = document.getElementById('modal-selecao-obras');
+            if (event.target === modalSelecao) {
+                fecharModalSelecao();
+            }
+
+            const modalPendencias = document.getElementById('modal-pendencias');
+            if (event.target === modalPendencias) {
+                fecharModalPendencias();
             }
         }
 
@@ -1291,7 +1298,6 @@
             lockScroll();
             document.getElementById('login-overlay').style.display = 'flex';
             
-            // ATIVAR A TECLA ENTER NO CAMPO DE TOKEN
             document.getElementById('popup-token').addEventListener('keydown', function(e) {
                 if (e.key === 'Enter') {
                     e.preventDefault();
