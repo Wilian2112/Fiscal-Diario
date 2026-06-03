@@ -12,7 +12,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Bibliotecas de Exportação -->
+    <!-- Bibliotecas de Exportação e PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
@@ -21,17 +21,9 @@
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif']
-                    },
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
                     colors: {
-                        primary: {
-                            50: '#f0fdf4',
-                            100: '#dcfce7',
-                            600: '#15803d',
-                            700: '#166534',
-                            900: '#064e3b'
-                        }
+                        primary: { 50: '#f0fdf4', 100: '#dcfce7', 600: '#15803d', 700: '#166534', 900: '#064e3b' }
                     }
                 }
             }
@@ -39,284 +31,46 @@
     </script>
 
     <style>
-        body {
-            background-color: #f8fafc;
-            overflow-x: hidden;
-        }
+        body { background-color: #f8fafc; overflow-x: hidden; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+        .calendar-header-day { font-size: 0.65rem; font-weight: 800; color: #94a3b8; text-align: center; padding-bottom: 10px; text-transform: uppercase; }
+        .calendar-day { aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; border-radius: 10px; font-weight: 800; position: relative; transition: all 0.2s; cursor: pointer; z-index: 1; background-color: #f1f5f9; color: #475569; }
+        .calendar-day:hover { transform: scale(1.1); z-index: 50; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        
+        /* Status Colors */
+        .status-aprovado { background-color: #15803d !important; color: white !important; }
+        .status-revisar { background-color: #ef4444 !important; color: white !important; }
+        .status-pendente { background-color: #fbbf24 !important; color: white !important; }
+        .status-vazio { background-color: #f1f5f9; color: #475569; }
+        .day-sabado { background-color: #e2e8f0 !important; color: #475569 !important; }
+        .day-domingo { background-color: #cbd5e1 !important; color: #475569 !important; }
+        .day-today { border: 2.5px solid #15803d !important; box-shadow: 0 0 10px rgba(21, 128, 61, 0.3); z-index: 10; }
 
-        .calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 6px;
-        }
+        .stripe-alert { position: absolute; bottom: 0; left: 0; width: 100%; height: 6px; background: repeating-linear-gradient(-45deg, #fbbf24, #fbbf24 4px, #000 4px, #000 8px); border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; z-index: 20; }
+        
+        #login-overlay { backdrop-filter: blur(16px); background-color: rgba(6, 78, 59, 0.9); }
+        #side-panel { transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        #side-panel.open { transform: translateX(0); }
+        .side-overlay { opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+        .side-overlay.open { opacity: 1; pointer-events: auto; }
+        
+        .details-section { border: 1px solid #e2e2f0; border-radius: 1.25rem; margin-bottom: 0.75rem; overflow: hidden; background: #f8fafc; }
+        .details-section summary { list-style: none; padding: 1.25rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; color: #64748b; }
+        .details-section[open] { background: white; border-color: #15803d; }
 
-        .calendar-header-day {
-            font-size: 0.65rem;
-            font-weight: 800;
-            color: #94a3b8;
-            text-align: center;
-            padding-bottom: 10px;
-            text-transform: uppercase;
-        }
+        .btn-action-icon { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; background: #f0fdf4; color: #15803d; border-radius: 8px; font-size: 12px; transition: all 0.2s; }
+        .btn-action-icon:hover { background: #15803d; color: white; }
 
-        .calendar-day {
-            aspect-ratio: 1 / 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.85rem;
-            border-radius: 10px;
-            font-weight: 800;
-            position: relative;
-            transition: all 0.2s;
-            cursor: pointer;
-            z-index: 1;
-            background-color: #f1f5f9;
-            color: #475569;
-        }
+        .modal-base { backdrop-filter: blur(8px); background-color: rgba(2, 44, 34, 0.7); }
+        .custom-checkbox { width: 18px; height: 18px; border-radius: 4px; border: 2px solid #cbd5e1; appearance: none; cursor: pointer; transition: all 0.2s; position: relative; }
+        .custom-checkbox:checked { background-color: #15803d; border-color: #15803d; }
+        .custom-checkbox:checked::after { content: "\f00c"; font-family: "Font Awesome 6 Free"; font-weight: 900; color: white; font-size: 10px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
 
-        .calendar-day:hover {
-            transform: scale(1.1);
-            z-index: 50;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-        }
-
-        .status-aprovado {
-            background-color: #15803d !important;
-            color: white !important;
-        }
-
-        .status-revisar {
-            background-color: #ef4444 !important;
-            color: white !important;
-        }
-
-        .status-pendente {
-            background-color: #fbbf24 !important;
-            color: white !important;
-        }
-
-        .status-vazio {
-            background-color: #f1f5f9;
-            color: #475569;
-        }
-
-        .day-sabado {
-            background-color: #e2e8f0 !important;
-            color: #475569 !important;
-        }
-
-        .day-domingo {
-            background-color: #cbd5e1 !important;
-            color: #475569 !important;
-        }
-
-        .day-today {
-            border: 2.5px solid #15803d !important;
-            box-shadow: 0 0 10px rgba(21, 128, 61, 0.3);
-            z-index: 10;
-        }
-
-        .stripe-alert {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 6px;
-            background: repeating-linear-gradient(-45deg, #fbbf24, #fbbf24 4px, #000 4px, #000 8px);
-            border-bottom-left-radius: 10px;
-            border-bottom-right-radius: 10px;
-            z-index: 20;
-        }
-
-        #login-overlay {
-            backdrop-filter: blur(16px);
-            background-color: rgba(6, 78, 59, 0.9);
-        }
-
-        #side-panel {
-            transform: translateX(100%);
-            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        #side-panel.open {
-            transform: translateX(0);
-        }
-
-        .side-overlay {
-            opacity: 0;
-            transition: opacity 0.3s;
-            pointer-events: none;
-        }
-
-        .side-overlay.open {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .details-section {
-            border: 1px solid #e2e2f0;
-            border-radius: 1.25rem;
-            margin-bottom: 0.75rem;
-            overflow: hidden;
-            background: #f8fafc;
-        }
-
-        .details-section summary {
-            list-style: none;
-            padding: 1.25rem;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-weight: 800;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            color: #64748b;
-        }
-
-        .details-section[open] {
-            background: white;
-            border-color: #15803d;
-        }
-
-        .btn-link-externo {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 24px;
-            height: 24px;
-            background: #f0fdf4;
-            color: #15803d;
-            border-radius: 6px;
-            font-size: 10px;
-        }
-
-        .global-nav-btn {
-            padding: 8px 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: white;
-            border-radius: 12px;
-            color: #15803d;
-            border: 1px solid #e2e8f0;
-            transition: all 0.2s;
-            font-weight: 800;
-            font-size: 11px;
-            text-transform: uppercase;
-        }
-
-        .global-nav-btn:hover:not(:disabled) {
-            background: #15803d;
-            color: white;
-            border-color: #15803d;
-            transform: translateY(-1px);
-        }
-
-        .global-nav-btn:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-            filter: grayscale(1);
-        }
-
-        .status-dropdown {
-            display: none;
-            position: absolute;
-            top: 110%;
-            right: 0;
-            width: 220px;
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 16px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            z-index: 100;
-            padding: 8px;
-        }
-
-        .status-dropdown.open {
-            display: block;
-        }
-
-        .status-option {
-            width: 100%;
-            text-align: left;
-            padding: 10px 14px;
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            border-radius: 8px;
-            color: #475569;
-            transition: all 0.2s;
-        }
-
-        .status-option:hover {
-            background: #f0fdf4;
-            color: #15803d;
-        }
-
-        .sync-spinning {
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            from {
-                transform: rotate(0deg);
-            }
-
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        .modal-base {
-            backdrop-filter: blur(8px);
-            background-color: rgba(2, 44, 34, 0.7);
-        }
-
-        .btn-copy {
-            background-color: #15803d;
-        }
-
-        .btn-download {
-            background-color: #475569;
-        }
-
-        .custom-checkbox {
-            width: 20px;
-            height: 20px;
-            border-radius: 4px;
-            border: 2px solid #cbd5e1;
-            appearance: none;
-            cursor: pointer;
-            transition: all 0.2s;
-            position: relative;
-        }
-
-        .custom-checkbox:checked {
-            background-color: #15803d;
-            border-color: #15803d;
-        }
-
-        .custom-checkbox:checked::after {
-            content: "\f00c";
-            font-family: "Font Awesome 6 Free";
-            font-weight: 900;
-            color: white;
-            font-size: 10px;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-
-        .modal-obra-row {
-            transition: background-color 0.2s ease;
-        }
-
-        .modal-obra-row.selected {
-            background-color: rgba(21, 128, 61, 0.05);
-        }
+        .status-dropdown { display: none; position: absolute; top: 110%; right: 0; width: 220px; background: white; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); z-index: 100; padding: 8px; }
+        .status-dropdown.open { display: block; }
+        
+        .sync-spinning { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     </style>
 </head>
 
@@ -324,191 +78,99 @@
 
     <!-- LOGIN POP-UP -->
     <div id="login-overlay" class="fixed inset-0 z-[200] flex items-center justify-center overflow-hidden">
-        <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-md p-10 m-4 text-center relative overflow-hidden">
-
-            <div class="inline-flex items-center justify-center mb-8">
-                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRmHLLhhzqVAzvECxD7HCqYHK4Znpr3kQvwYg&s" alt="Logo Pacopedra" class="h-20 w-auto object-contain">
-            </div>
-
+        <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md p-10 m-4 text-center relative overflow-hidden">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRmHLLhhzqVAzvECxD7HCqYHK4Znpr3kQvwYg&s" alt="Logo Pacopedra" class="h-20 mx-auto mb-8 object-contain">
             <h2 class="text-3xl font-black text-gray-900 tracking-tight mb-2">Acesso Restrito</h2>
-            <p class="text-gray-500 mb-8 font-medium"></p>
-
-            <div id="login-error" class="hidden mb-6 bg-red-50 border border-red-100 text-red-600 p-4 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 animate-bounce">
-                <i class="fas fa-exclamation-triangle"></i> Por favor, insira o token
+            <div id="login-error" class="hidden mb-6 bg-red-50 border border-red-100 text-red-600 p-4 rounded-2xl text-xs font-black uppercase flex items-center justify-center gap-2 animate-bounce">
+                <i class="fas fa-exclamation-triangle"></i> Token inválido ou expirado
             </div>
-
-            <input type="password" id="popup-token" class="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none mb-6 font-mono text-center tracking-widest focus:border-green-700 transition-all block mt-10px" placeholder="INSIRA O TOKEN DE ACESSO">
+            <input type="password" id="popup-token" class="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none mb-6 font-mono text-center tracking-widest focus:border-green-700 transition-all block mt-4" placeholder="INSIRA O TOKEN">
             <button onclick="realizarLogin()" class="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-5 rounded-2xl shadow-xl transition-all active:scale-95 uppercase tracking-widest">Acessar Painel</button>
         </div>
     </div>
 
-    <!-- MODAL SELEÇÃO DE OBRAS -->
-    <div id="modal-selecao-obras" class="fixed inset-0 z-[160] hidden modal-base flex items-center justify-center p-4">
-        <div class="bg-white rounded-[1.5rem] shadow-2xl w-full max-w-lg flex flex-col overflow-hidden">
-            <div class="p-6 flex justify-between items-center">
-                <h2 class="text-2xl font-bold text-slate-700 flex items-center gap-3">
-                    <i class="fas fa-list-check text-green-700"></i> Seleção
-                    <span id="modal-selection-count" class="text-[10px] font-black text-green-700 bg-green-50 px-2.5 py-1 rounded-full uppercase tracking-widest border border-green-100">0 selecionadas</span>
-                </h2>
-                <button onclick="fecharModalSelecao()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+    <!-- MODAL SELEÇÃO DE DIAS PARA IMPRESSÃO (ESTILO IMAGEM) -->
+    <div id="modal-imprimir" class="fixed inset-0 z-[170] hidden modal-base flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h2 class="text-lg font-bold text-orange-600">Baixar relatórios</h2>
+                <button onclick="fecharModalImprimir()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
             </div>
-
-            <div class="px-6 pb-2">
-                <div class="relative mb-4">
-                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                    <input type="text" id="search-obras-modal" oninput="filtrarObrasNoModal()" placeholder="Pesquisar obra..." class="w-full bg-gray-50 border border-gray-200 rounded-lg py-3 pl-11 pr-4 text-sm outline-none focus:ring-2 focus:ring-green-500/20 transition-all">
+            <div class="p-4">
+                <div class="bg-gray-100 p-4 rounded border text-[11px] text-gray-600 leading-relaxed mb-4">
+                    Recomendamos utilizar o navegador "Google Chrome".<br>
+                    <b>Permita</b> a opção "Fazer download de vários arquivos" para baixar os itens selecionados.
                 </div>
-                <div class="flex justify-between text-[11px] font-bold text-gray-400 uppercase px-1">
-                    <span>Ocultar ou mostrar do painel</span>
-                    <div class="flex gap-4">
-                        <button onclick="marcarTodasNoModal(true)" class="text-green-700 hover:underline">Marcar todas</button>
-                        <button onclick="marcarTodasNoModal(false)" class="text-green-700 hover:underline">Desmarcar todas</button>
-                    </div>
+                <div class="flex items-center gap-3 px-2 py-2 border-b">
+                    <input type="checkbox" id="check-all-reports" onchange="toggleSelectAllReports(this)" class="custom-checkbox">
+                    <label for="check-all-reports" class="text-xs font-bold text-gray-500 cursor-pointer">Selecionar tudo</label>
+                </div>
+                <div id="lista-relatorios-imprimir" class="max-h-[350px] overflow-y-auto">
+                    <!-- Gerado dinamicamente -->
                 </div>
             </div>
-
-            <div id="lista-obras-selecao" class="flex-grow overflow-y-auto max-h-[50vh] px-6 py-2 space-y-1"></div>
-
-            <div class="p-6 grid grid-cols-1 gap-4 bg-gray-50">
-                <button onclick="aplicarFiltroSelecao()" class="bg-green-700 hover:bg-green-800 text-white font-bold py-3.5 rounded-xl transition-all active:scale-95">CONFIRMAR SELEÇÃO</button>
+            <div class="p-4 bg-gray-50 border-t flex justify-end gap-2">
+                <button onclick="fecharModalImprimir()" class="px-6 py-2 border rounded text-xs font-bold text-gray-600 hover:bg-gray-100 transition-all">Fechar</button>
+                <button onclick="gerarPdfConsolidado()" class="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded text-xs font-bold flex items-center gap-2 transition-all">
+                    <i class="fas fa-file-pdf"></i> Baixar PDF Consolidado
+                </button>
             </div>
         </div>
     </div>
 
     <!-- MODAL LISTA DE PENDÊNCIAS -->
     <div id="modal-pendencias" class="fixed inset-0 z-[150] hidden modal-base flex items-center justify-center p-4">
-        <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-300">
+        <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl flex flex-col overflow-hidden">
             <div class="p-6 border-b flex justify-between items-center bg-gray-50">
                 <h2 class="text-xl font-black uppercase tracking-tighter">Pendências de Relatórios</h2>
-                <button onclick="fecharModalPendencias()" class="text-gray-400 hover:text-gray-600 transition-all"><i class="fas fa-times text-xl"></i></button>
+                <button onclick="fecharModalPendencias()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
             </div>
             <div class="p-8 overflow-y-auto max-h-[60vh]">
-                <div id="container-texto-whatsapp" class="bg-gray-900 text-emerald-400 p-6 rounded-2xl font-mono text-xs whitespace-pre-wrap leading-relaxed border border-gray-800 shadow-inner">
-                    Gerando lista formatada...
+                <div id="container-texto-whatsapp" class="bg-gray-900 text-emerald-400 p-6 rounded-2xl font-mono text-xs whitespace-pre-wrap leading-relaxed border border-gray-800">
+                    Gerando lista...
                 </div>
             </div>
             <div class="p-6 border-t bg-gray-50 flex gap-3">
-                <button onclick="copiarTextoWhatsApp()" class="flex-1 btn-copy hover:opacity-90 text-white font-black py-4 rounded-2xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-3">
-                    <i class="fas fa-copy text-xl"></i> COPIAR TEXTO
+                <button onclick="copiarTextoWhatsApp()" class="flex-1 bg-green-700 text-white font-black py-4 rounded-2xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-3">
+                    <i class="fas fa-copy"></i> COPIAR TEXTO
                 </button>
-                <button onclick="downloadTextoPendencias()" class="flex-1 btn-download hover:opacity-90 text-white font-black py-4 rounded-2xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-3">
-                    <i class="fas fa-file-download text-xl"></i> DOWNLOAD (.TXT)
+                <button onclick="downloadTextoPendencias()" class="flex-1 bg-slate-600 text-white font-black py-4 rounded-2xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-3">
+                    <i class="fas fa-file-download"></i> DOWNLOAD (.TXT)
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- NOVO: MODAL DE EXPORTAÇÃO -->
-    <div id="modal-exportar" class="fixed inset-0 z-[160] hidden modal-base flex items-center justify-center p-4">
-        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-300">
-            <div class="p-6 border-b flex justify-between items-center bg-gray-50">
-                <h2 class="text-xl font-black uppercase tracking-tighter text-slate-700">Exportar Relatórios</h2>
-                <button onclick="fecharModalExportar()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
-            </div>
-            <div class="p-8 space-y-6">
-                <p class="text-xs text-gray-500 font-bold uppercase tracking-wider text-center">
-                    Selecione o formato para exportar os dados das <span class="text-green-700" id="export-count-obras">0</span> obras selecionadas do mês atual.
-                </p>
-                
-                <div class="grid grid-cols-1 gap-3">
-                    <button onclick="exportarRelatorios('pdf')" class="flex items-center justify-between p-4 bg-red-50 hover:bg-red-100 border border-red-100 rounded-2xl transition-all group text-left">
-                        <div class="flex items-center gap-4">
-                            <i class="fas fa-file-pdf text-2xl text-red-600"></i>
-                            <span class="font-black text-xs uppercase text-red-900">Documento PDF (.pdf)</span>
-                        </div>
-                        <i class="fas fa-chevron-right text-red-300 group-hover:translate-x-1 transition-transform"></i>
-                    </button>
-
-                    <button onclick="exportarRelatorios('xlsx')" class="flex items-center justify-between p-4 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 rounded-2xl transition-all group text-left">
-                        <div class="flex items-center gap-4">
-                            <i class="fas fa-file-excel text-2xl text-emerald-600"></i>
-                            <span class="font-black text-xs uppercase text-emerald-900">Planilha Excel (.xlsx)</span>
-                        </div>
-                        <i class="fas fa-chevron-right text-emerald-300 group-hover:translate-x-1 transition-transform"></i>
-                    </button>
-
-                    <button onclick="exportarRelatorios('csv')" class="flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 border border-gray-100 rounded-2xl transition-all group text-left">
-                        <div class="flex items-center gap-4">
-                            <i class="fas fa-file-csv text-2xl text-gray-600"></i>
-                            <span class="font-black text-xs uppercase text-gray-900">Arquivo CSV (.csv)</span>
-                        </div>
-                        <i class="fas fa-chevron-right text-gray-300 group-hover:translate-x-1 transition-transform"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- NOTIFICAÇÃO DE SUCESSO (TOAST) -->
+    <!-- NOTIFICAÇÃO (TOAST) -->
     <div id="toast-sucesso" class="fixed top-10 left-1/2 -translate-x-1/2 z-[300] hidden">
         <div class="bg-emerald-600 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-4 animate-in fade-in slide-in-from-top-5 duration-300 border border-emerald-500/20">
-            <div class="bg-white/20 w-8 h-8 rounded-full flex items-center justify-center">
-                <i class="fas fa-check text-sm"></i>
-            </div>
-            <span id="toast-text" class="text-[10px] font-black uppercase tracking-[0.2em]">Sucesso!</span>
+            <i class="fas fa-check text-sm"></i>
+            <span id="toast-text" class="text-[10px] font-black uppercase tracking-widest">Sucesso!</span>
         </div>
-    </div>
-
-    <!-- PAINEL LATERAL -->
-    <div id="side-overlay" onclick="closeDetails()" class="side-overlay fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100]"></div>
-    <div id="side-panel" class="fixed top-0 right-0 h-full w-full max-w-xl bg-white z-[110] shadow-2xl flex flex-col">
-        <div class="p-6 border-b flex justify-between items-center bg-gray-50">
-            <div>
-                <h3 id="side-obra-nome" class="text-lg font-black text-gray-900 uppercase tracking-tighter inline-block mr-2">Obra</h3>
-                <div id="side-obra-link-container" class="inline-block"></div>
-                <p id="side-data" class="text-green-700 font-bold text-xs uppercase"></p>
-            </div>
-            <div class="flex items-center gap-2">
-                <button id="side-refresh-btn" title="Atualizar dados do dia" class="w-10 h-10 flex items-center justify-center rounded-full bg-white border shadow-sm hover:bg-gray-100 transition-all text-green-700">
-                    <i class="fas fa-sync-alt"></i>
-                </button>
-                <button onclick="closeDetails()" class="w-10 h-10 flex items-center justify-center rounded-full bg-white border shadow-sm hover:bg-gray-100 transition-all">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-        </div>
-        <div id="side-content" class="flex-grow overflow-y-auto custom-scroll p-8"></div>
     </div>
 
     <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between gap-6">
             <div class="flex items-center gap-3 shrink-0">
-                <div class="flex items-center justify-center overflow-hidden shrink-0">
-                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRmHLLhhzqVAzvECxD7HCqYHK4Znpr3kQvwYg&s" alt="Logo Pacopedra" class="h-12 w-auto object-contain">
-                </div>
-                <div class="hidden sm:block">
-                    <span id="last-update-tag" class="text-[8px] font-bold text-gray-400 uppercase tracking-widest block mt-[23px]">Sincronizando</span>
-                </div>
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRmHLLhhzqVAzvECxD7HCqYHK4Znpr3kQvwYg&s" alt="Logo Pacopedra" class="h-12 w-auto object-contain">
+                <span id="last-update-tag" class="text-[8px] font-bold text-gray-400 uppercase tracking-widest hidden sm:block mt-5">Sincronizando...</span>
             </div>
 
             <div class="flex-grow relative flex items-center gap-2">
                 <div class="relative flex-grow">
                     <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]"></i>
-                    <input type="text" id="search-input" oninput="handleGlobalSearch()" placeholder="Pesquisar no painel..." class="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 pl-10 pr-4 text-xs font-bold outline-none focus:ring-2 focus:ring-green-500/20 focus:bg-white transition-all">
+                    <input type="text" id="search-input" oninput="handleGlobalSearch()" placeholder="Pesquisar obra no painel..." class="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 pl-10 pr-4 text-xs font-bold outline-none focus:ring-2 focus:ring-green-500/20 transition-all">
                 </div>
-                <button onclick="abrirModalSelecao()" class="px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-[10px] font-black hover:bg-gray-50 transition-all flex items-center gap-2 text-gray-600 uppercase shrink-0">
-                    <i class="fas fa-filter"></i> Seleção de Obras
-                </button>
             </div>
 
             <div class="flex items-center gap-2 shrink-0">
-                <button onclick="abrirModalExportar()" class="flex items-center gap-2 px-4 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-[10px] font-black transition-all border border-blue-100 uppercase">
-                    Exportar Mensal <i class="fas fa-file-export"></i>
-                </button>
                 <button onclick="abrirModalPendencias()" class="flex items-center gap-2 px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-[10px] font-black transition-all border border-emerald-100 uppercase">
-                    Gerar Pendências <i class="fas fa-list-ul"></i>
+                    Pendências <i class="fas fa-list-ul"></i>
                 </button>
-                <button onclick="iniciarSincronizacao(true)" title="Atualizar" class="flex items-center justify-center w-10 h-10 bg-green-50 hover:bg-green-100 text-green-700 rounded-xl transition-all border border-green-100">
+                <button onclick="iniciarSincronizacao(true)" class="w-10 h-10 bg-green-50 text-green-700 rounded-xl border border-green-100 hover:bg-green-100 transition-all flex items-center justify-center">
                     <i id="sync-icon-manual" class="fas fa-sync-alt"></i>
                 </button>
-                <div class="relative">
-                    <button onclick="toggleStatusDropdown()" class="flex items-center gap-2 px-4 py-2.5 bg-gray-50 hover:bg-gray-100 text-gray-600 rounded-xl text-[10px] font-black transition-all border border-gray-200 uppercase min-w-[160px] justify-between">
-                        <span id="current-status-label">Status: Todos</span>
-                        <i class="fas fa-chevron-down text-green-700"></i>
-                    </button>
-                    <div id="status-dropdown" class="status-dropdown"></div>
-                </div>
-                <button onclick="sair()" class="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 text-gray-400 hover:text-red-500 transition-all border border-gray-200">
+                <button onclick="sair()" class="w-10 h-10 bg-gray-50 text-gray-400 rounded-xl border border-gray-200 hover:text-red-500 transition-all flex items-center justify-center">
                     <i class="fas fa-power-off"></i>
                 </button>
             </div>
@@ -516,26 +178,35 @@
 
         <div class="bg-gray-50 border-b border-gray-200 py-3">
             <div class="max-w-7xl mx-auto px-4 flex items-center justify-center gap-6">
-                <button onclick="changeGlobalMonth(-1)" class="global-nav-btn shadow-sm">
-                    <i class="fas fa-chevron-left mr-2"></i> Anterior
-                </button>
-                <div class="bg-white px-8 py-2 rounded-xl border border-green-100 shadow-sm min-w-[180px] text-center">
-                    <span id="global-month-label" class="text-[11px] font-black uppercase text-green-800 tracking-widest">Janeiro 2024</span>
+                <button onclick="changeGlobalMonth(-1)" class="global-nav-btn"><i class="fas fa-chevron-left mr-2"></i> Anterior</button>
+                <div class="bg-white px-8 py-2 rounded-xl border border-green-100 min-w-[180px] text-center">
+                    <span id="global-month-label" class="text-[11px] font-black uppercase text-green-800 tracking-widest">Carregando...</span>
                 </div>
-                <button id="global-next-btn" onclick="changeGlobalMonth(1)" class="global-nav-btn shadow-sm">
-                    Próximo <i class="fas fa-chevron-right ml-2"></i>
-                </button>
+                <button id="global-next-btn" onclick="changeGlobalMonth(1)" class="global-nav-btn">Próximo <i class="fas fa-chevron-right ml-2"></i></button>
             </div>
         </div>
     </header>
 
     <main class="flex-grow max-w-7xl mx-auto px-4 py-8 w-full">
-        <div id="loader" style="display: none;" class="py-20 text-center">
+        <div id="loader" class="py-20 text-center hidden">
             <div class="inline-block w-10 h-10 border-4 border-green-700 border-t-transparent rounded-full animate-spin"></div>
             <p class="text-gray-400 font-black text-[9px] mt-4 uppercase tracking-widest">Sincronizando dados Pacopedra...</p>
         </div>
         <div id="dashboard" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
     </main>
+
+    <!-- SIDE PANEL DETAILS -->
+    <div id="side-overlay" onclick="closeDetails()" class="side-overlay fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100]"></div>
+    <div id="side-panel" class="fixed top-0 right-0 h-full w-full max-w-xl bg-white z-[110] shadow-2xl flex flex-col">
+        <div class="p-6 border-b flex justify-between items-center bg-gray-50">
+            <div>
+                <h3 id="side-obra-nome" class="text-lg font-black text-gray-900 uppercase">Obra</h3>
+                <p id="side-data" class="text-green-700 font-bold text-xs uppercase"></p>
+            </div>
+            <button onclick="closeDetails()" class="w-10 h-10 flex items-center justify-center rounded-full bg-white border shadow-sm hover:bg-gray-100 transition-all"><i class="fas fa-times"></i></button>
+        </div>
+        <div id="side-content" class="flex-grow overflow-y-auto p-8"></div>
+    </div>
 
     <script>
         const API_ENDPOINT = "https://apiexterna.diariodeobra.app/v1";
@@ -544,864 +215,268 @@
 
         let cachedData = [];
         let todasObras = [];
-
-        let manualOverrides = JSON.parse(localStorage.getItem('obras_manual_overrides') || '{}');
-        let selectedObraIds = new Set();
-
         let now = new Date();
         let globalViewDate = new Date(now.getFullYear(), now.getMonth(), 1, 12, 0, 0);
-        let autoRefreshInterval = null;
         let reportDetailsCache = {};
-        let selectedStatus = 'todos';
         let globalSearchTerm = "";
+        let currentObraImprimir = null;
 
-        function lockScroll() {
-            document.body.style.overflow = 'hidden';
-        }
+        function lockScroll() { document.body.style.overflow = 'hidden'; }
+        function unlockScroll() { document.body.style.overflow = ''; }
 
-        function unlockScroll() {
-            document.body.style.overflow = '';
-        }
-
-        function normalizeString(str) {
-            return str ? str.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ' ').trim() : "";
-        }
-
-        function syncSelectionWithFilters() {
-            selectedObraIds.clear();
-            todasObras.forEach(o => {
-                const matchStatus = (selectedStatus === 'todos' || o.status.descricao === selectedStatus);
-                const isManuallyHidden = (manualOverrides[o._id] === false);
-                if (matchStatus && !isManuallyHidden) {
-                    selectedObraIds.add(o._id);
-                }
-            });
-        }
-
-        function handleGlobalSearch() {
-            globalSearchTerm = document.getElementById('search-input').value.toLowerCase();
-            render();
-        }
-
-        function filterByStatus(status) {
-            selectedStatus = status;
-            document.getElementById('status-dropdown').classList.remove('open');
-            syncSelectionWithFilters();
-            render();
-        }
-
-        function abrirModalSelecao() {
-            lockScroll();
-            document.getElementById('modal-selecao-obras').classList.remove('hidden');
-            renderListaSelecao();
-        }
-
-        function fecharModalSelecao() {
-            unlockScroll();
-            document.getElementById('modal-selecao-obras').classList.add('hidden');
-        }
-
-        function renderListaSelecao() {
-            const container = document.getElementById('lista-obras-selecao');
-            const countLabel = document.getElementById('modal-selection-count');
-            const modalSearch = document.getElementById('search-obras-modal').value.toLowerCase();
-
-            countLabel.innerText = `${selectedObraIds.size} selecionada${selectedObraIds.size !== 1 ? 's' : ''}`;
-            container.innerHTML = '';
-
-            todasObras
-                .filter(o => o.nome.toLowerCase().includes(modalSearch))
-                .sort((a, b) => {
-                    const aChecked = selectedObraIds.has(a._id);
-                    const bChecked = selectedObraIds.has(b._id);
-                    if (aChecked && !bChecked) return -1;
-                    if (!aChecked && bChecked) return 1;
-                    return a.nome.localeCompare(b.nome);
-                })
-                .forEach(obra => {
-                    const div = document.createElement('div');
-                    const isChecked = selectedObraIds.has(obra._id);
-                    div.className = `modal-obra-row flex items-center gap-3 py-2.5 px-3 border-b border-gray-50 last:border-0 rounded-lg ${isChecked ? 'selected' : ''}`;
-                    div.innerHTML = `
-                        <input type="checkbox" class="custom-checkbox" ${isChecked ? 'checked' : ''} 
-                               onchange="toggleObraSelecao('${obra._id}')">
-                        <div class="flex flex-col truncate cursor-pointer" onclick="this.previousElementSibling.click()">
-                            <span class="text-sm font-semibold ${isChecked ? 'text-slate-800' : 'text-slate-400'} truncate uppercase">${obra.nome}</span>
-                            <span class="text-[9px] font-bold text-gray-400 uppercase">${obra.status.descricao}</span>
-                        </div>
-                    `;
-                    container.appendChild(div);
-                });
-        }
-
-        function toggleObraSelecao(id) {
-            const currentlySelected = selectedObraIds.has(id);
-            manualOverrides[id] = !currentlySelected;
-            localStorage.setItem('obras_manual_overrides', JSON.stringify(manualOverrides));
-            syncSelectionWithFilters();
-            renderListaSelecao();
-        }
-
-        function marcarTodasNoModal(status) {
-            const modalSearch = document.getElementById('search-obras-modal').value.toLowerCase();
-            todasObras.forEach(o => {
-                if (o.nome.toLowerCase().includes(modalSearch)) {
-                    manualOverrides[o._id] = status;
-                }
-            });
-            localStorage.setItem('obras_manual_overrides', JSON.stringify(manualOverrides));
-            syncSelectionWithFilters();
-            renderListaSelecao();
-        }
-
-        function filtrarObrasNoModal() {
-            renderListaSelecao();
-        }
-
-        function aplicarFiltroSelecao() {
-            fecharModalSelecao();
-            render();
-        }
-
-        // FUNÇÕES DE EXPORTAÇÃO
-        function abrirModalExportar() {
-            lockScroll();
-            document.getElementById('export-count-obras').innerText = selectedObraIds.size;
-            document.getElementById('modal-exportar').classList.remove('hidden');
-        }
-
-        function fecharModalExportar() {
-            unlockScroll();
-            document.getElementById('modal-exportar').classList.add('hidden');
-        }
-
-        async function exportarRelatorios(formato) {
-            const mesVisivel = globalViewDate.getMonth();
-            const anoVisivel = globalViewDate.getFullYear();
-            const dadosExportacao = [];
-
-            cachedData.forEach(res => {
-                if (!selectedObraIds.has(res.obra._id)) return;
-
-                res.relsMes.forEach(rel => {
-                    const dataRel = parseDateSafely(rel.data);
-                    if (dataRel && dataRel.getMonth() === mesVisivel && dataRel.getFullYear() === anoVisivel) {
-                        
-                        const detalhes = reportDetailsCache[rel._id] || {};
-                        
-                        dadosExportacao.push({
-                            'OBRA': res.obra.nome.toUpperCase(),
-                            'DATA': dataRel.toLocaleDateString('pt-BR'),
-                            'STATUS': rel.status.descricao.toUpperCase(),
-                            'NÚMERO': rel.numero || '-',
-                            'RESPONSÁVEL': res.obra.responsavel || '-',
-                            'ATIVIDADES': detalhes.atividades?.map(a => `${a.descricao} (${a.porcentagem}%)`).join(' | ') || 'Dados não carregados no cache',
-                            'EFETIVO': (detalhes.maoDeObra?.padrao?.length || 0) + (detalhes.maoDeObra?.personalizada?.length || 0),
-                            'EQUIPAMENTOS': detalhes.equipamentos?.length || 0
-                        });
-                    }
-                });
-            });
-
-            if (dadosExportacao.length === 0) {
-                alert("Nenhum relatório encontrado para exportar neste período.");
-                return;
-            }
-
-            const nomeArquivo = `Pacopedra_Dashboard_${(mesVisivel + 1).toString().padStart(2, '0')}_${anoVisivel}`;
-
-            if (formato === 'xlsx') {
-                const ws = XLSX.utils.json_to_sheet(dadosExportacao);
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "Relatórios");
-                XLSX.writeFile(wb, `${nomeArquivo}.xlsx`);
-            } 
-            else if (formato === 'csv') {
-                const ws = XLSX.utils.json_to_sheet(dadosExportacao);
-                const csv = XLSX.utils.sheet_to_csv(ws);
-                const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csv], { type: 'text/csv;charset=utf-8;' });
-                const link = document.createElement("a");
-                link.href = URL.createObjectURL(blob);
-                link.download = `${nomeArquivo}.csv`;
-                link.click();
-            } 
-            else if (formato === 'pdf') {
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF('l', 'pt', 'a4');
-                
-                doc.setFontSize(14);
-                doc.text("PACOPEDRA - RELATÓRIO MENSAL CONSOLIDADO", 40, 40);
-                doc.setFontSize(10);
-                doc.text(`Período: ${document.getElementById('global-month-label').innerText}`, 40, 55);
-
-                const headers = [Object.keys(dadosExportacao[0])];
-                const rows = dadosExportacao.map(obj => Object.values(obj));
-
-                doc.autoTable({
-                    head: headers,
-                    body: rows,
-                    startY: 70,
-                    theme: 'striped',
-                    headStyles: { fillStyle: '#15803d', fontSize: 8 },
-                    bodyStyles: { fontSize: 7 },
-                    margin: { top: 70 }
-                });
-
-                doc.save(`${nomeArquivo}.pdf`);
-            }
-
-            mostrarAviso("Exportação concluída!");
-            fecharModalExportar();
-        }
-
-        function formatarIntervalos(dias, mes, ano) {
-            if (dias.length === 0) return "";
-            dias.sort((a, b) => a - b);
-            let segmentos = [];
-            let i = 0;
-            while (i < dias.length) {
-                let j = i;
-                while (j < dias.length - 1) {
-                    let atual = dias[j];
-                    let proximo = dias[j + 1];
-                    let diff = proximo - atual;
-
-                    if (diff === 1) {
-                        j++;
-                    } else if (diff <= 3) {
-                        let temDiaUtilNoMeio = false;
-                        for (let d = atual + 1; d < proximo; d++) {
-                            let dataTeste = new Date(ano, mes, d);
-                            if (dataTeste.getDay() !== 0 && dataTeste.getDay() !== 6) {
-                                temDiaUtilNoMeio = true;
-                                break;
-                            }
-                        }
-                        if (!temDiaUtilNoMeio) j++;
-                        else break;
-                    } else {
-                        break;
-                    }
-                }
-
-                let rangeLen = (j - i) + 1;
-                if (rangeLen >= 3) {
-                    segmentos.push({
-                        tipo: 'faixa',
-                        de: dias[i],
-                        ate: dias[j]
-                    });
-                } else {
-                    let vals = [];
-                    for (let k = i; k <= j; k++) vals.push(dias[k]);
-
-                    let ultimoSegmento = segmentos[segmentos.length - 1];
-                    if (ultimoSegmento && ultimoSegmento.tipo === 'unicos') {
-                        ultimoSegmento.valores.push(...vals);
-                    } else {
-                        segmentos.push({
-                            tipo: 'unicos',
-                            valores: vals
-                        });
-                    }
-                }
-                i = j + 1;
-            }
-            return segmentos.map(s => {
-                if (s.tipo === 'unicos') {
-                    const label = s.valores.length > 1 ? "DIAS" : "DIA";
-                    return `${label} ${s.valores.map(v => v.toString().padStart(2, '0')).join(', ')}`;
-                }
-                return `DO DIA ${s.de.toString().padStart(2, '0')} AO ${s.ate.toString().padStart(2, '0')}`;
-            }).join(' & ');
-        }
-
-        async function abrirModalPendencias() {
-            lockScroll();
-            document.getElementById('modal-pendencias').classList.remove('hidden');
-            const container = document.getElementById('container-texto-whatsapp');
-            container.innerText = "Sincronizando dados atuais...";
-
-            try {
-                await iniciarSincronizacao(true);
-
-                const respPlanilha = await fetch(LINK_PLANILHA_CSV + "&cache_buster=" + Date.now(), {
-                    cache: "no-store",
-                    headers: {
-                        'Cache-Control': 'no-cache',
-                        'Pragma': 'no-cache'
-                    }
-                });
-
-                const csvText = await respPlanilha.text();
-                const separador = csvText.includes(';') ? ';' : ',';
-                const linhasCsv = csvText.split(/\r?\n/).filter(l => l.trim() !== "");
-
-                if (linhasCsv.length < 1) throw new Error("Planilha vazia");
-
-                const cabecalho = linhasCsv[0].split(separador).map(c => c.replace(/"/g, '').trim().toLowerCase());
-                const idxEng = cabecalho.findIndex(c => c.includes('eng') || c.includes('nome'));
-                const idxObra = cabecalho.findIndex(c => c.includes('obra'));
-
-                const mapaEngenheiros = {};
-                linhasCsv.slice(1).forEach(linha => {
-                    const colunas = linha.split(separador).map(c => c.replace(/"/g, '').trim());
-                    if (colunas[idxEng] && colunas[idxObra]) {
-                        mapaEngenheiros[normalizeString(colunas[idxObra])] = colunas[idxEng];
-                    }
-                });
-
-                const mesVisivel = globalViewDate.getMonth();
-                const anoVisivel = globalViewDate.getFullYear();
-                const hoje = new Date();
-                const ultimoDiaNoMes = new Date(anoVisivel, mesVisivel + 1, 0).getDate();
-                const diaLimite = (anoVisivel === hoje.getFullYear() && mesVisivel === hoje.getMonth()) ? hoje.getDate() : ultimoDiaNoMes;
-
-                const agrupadoEngenheiro = {};
-
-                cachedData.forEach(res => {
-                    if (!selectedObraIds.has(res.obra._id)) return;
-
-                    const nomeObraNorm = normalizeString(res.obra.nome);
-                    let engNome = "SEM ENGENHEIRO";
-
-                    for (let obraPlanilha in mapaEngenheiros) {
-                        if (nomeObraNorm.includes(obraPlanilha) || obraPlanilha.includes(nomeObraNorm)) {
-                            engNome = mapaEngenheiros[obraPlanilha];
-                            break;
-                        }
-                    }
-
-                    if (!agrupadoEngenheiro[engNome]) agrupadoEngenheiro[engNome] = [];
-
-                    const diasPreenchidos = new Set();
-                    const diasPendentes = new Set();
-
-                    res.relsMes.forEach(r => {
-                        let dIn = parseDateSafely(r.data);
-                        let dOut = r.dataFim ? parseDateSafely(r.dataFim) : dIn;
-                        if (dIn) {
-                            let curr = new Date(dIn);
-                            let loopLimit = 0;
-                            while (curr <= dOut && loopLimit < 32) {
-                                if (curr.getMonth() === mesVisivel && curr.getFullYear() === anoVisivel) {
-                                    const diaNum = curr.getDate();
-                                    diasPreenchidos.add(diaNum);
-                                    if (r.status.id === 1) diasPendentes.add(diaNum);
-                                }
-                                curr.setDate(curr.getDate() + 1);
-                                loopLimit++;
-                            }
-                        }
-                    });
-
-                    const faltantes = [];
-                    for (let d = 1; d <= diaLimite; d++) {
-                        if (!diasPreenchidos.has(d)) {
-                            const dataTeste = new Date(anoVisivel, mesVisivel, d);
-                            if (dataTeste.getDay() !== 0 && dataTeste.getDay() !== 6) faltantes.push(d);
-                        }
-                    }
-
-                    const listaPendentes = Array.from(diasPendentes);
-
-                    if (listaPendentes.length > 0 || faltantes.length > 0) {
-                        agrupadoEngenheiro[engNome].push({
-                            obra: res.obra.nome.toUpperCase(),
-                            pendentes: formatarIntervalos(listaPendentes, mesVisivel, anoVisivel),
-                            faltantes: formatarIntervalos(faltantes, mesVisivel, anoVisivel)
-                        });
-                    }
-                });
-
-                const mesNome = globalViewDate.toLocaleString('pt-br', {
-                    month: 'long'
-                });
-                let texto = "";
-
-                const chavesEngenheiros = Object.keys(agrupadoEngenheiro).sort((a, b) => {
-                    const labelNaoEncontrado = "SEM ENGENHEIRO";
-                    if (a === labelNaoEncontrado) return 1;
-                    if (b === labelNaoEncontrado) return -1;
-                    return a.localeCompare(b);
-                });
-
-                chavesEngenheiros.forEach(eng => {
-                    texto += `*\`${eng.toUpperCase()}\`*\n*${mesNome.charAt(0).toUpperCase() + mesNome.slice(1)}*\n`;
-                    agrupadoEngenheiro[eng].forEach(item => {
-                        if (item.pendentes) texto += `Terminar de preencher ${item.obra}: ${item.pendentes}\n`;
-                        if (item.faltantes) texto += `Não foi criado ${item.obra}: ${item.faltantes}\n`;
-                    });
-                    texto += `\n`;
-                });
-                container.innerText = texto || "✅ Nenhuma pendência encontrada!";
-            } catch (e) {
-                container.innerText = "Erro ao buscar dados.";
-                console.error(e);
-            }
-        }
-
-        function mostrarAviso(mensagem) {
+        function mostrarAviso(msg) {
             const toast = document.getElementById('toast-sucesso');
-            const toastText = document.getElementById('toast-text');
-
-            toastText.innerText = mensagem;
+            document.getElementById('toast-text').innerText = msg;
             toast.classList.remove('hidden');
-
-            setTimeout(() => {
-                toast.classList.add('hidden');
-            }, 3000);
-        }
-
-        function copiarTextoWhatsApp() {
-            const texto = document.getElementById('container-texto-whatsapp').innerText;
-            navigator.clipboard.writeText(texto).then(() => {
-                mostrarAviso("TEXTO COPIADO COM SUCESSO!");
-            });
-        }
-
-        function downloadTextoPendencias() {
-            const texto = document.getElementById('container-texto-whatsapp').innerText;
-            const blob = new Blob([texto], {
-                type: 'text/plain'
-            });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            const hoje = new Date();
-            a.download = `DIA ${hoje.getDate()}.txt`;
-            a.click();
-            window.URL.revokeObjectURL(url);
-            mostrarAviso("DOWNLOAD CONCLUÍDO!");
-        }
-
-        function fecharModalPendencias() {
-            unlockScroll();
-            document.getElementById('modal-pendencias').classList.add('hidden');
-        }
-
-        function toggleStatusDropdown() {
-            document.getElementById('status-dropdown').classList.toggle('open');
+            setTimeout(() => toast.classList.add('hidden'), 3000);
         }
 
         async function realizarLogin() {
             const input = document.getElementById('popup-token');
-            const errorMsg = document.getElementById('login-error');
-            const btn = event.target; 
             const token = input.value.trim();
-
-            if (!token) {
-                errorMsg.innerText = "Por favor, insira o token.";
-                errorMsg.classList.remove('hidden');
-                input.classList.add('border-red-500', 'bg-red-50');
-                input.focus();
-                return;
-            }
-
-            const originalText = btn.innerText;
-            btn.innerText = "VALIDANDO...";
-            btn.disabled = true;
-
+            if (!token) return;
             try {
-                const response = await fetch(`${API_ENDPOINT}/empresa`, {
-                    headers: {
-                        'token': token,
-                        'Content-Type': 'application/json'
-                    }
-                });
+                const response = await fetch(`${API_ENDPOINT}/empresa`, { headers: { 'token': token } });
                 const data = await response.json();
-
-                if (response.status !== 200 || !data._id) {
-                    throw new Error("Invalido");
-                }
-
-                errorMsg.classList.add('hidden');
-                input.classList.remove('border-red-500', 'bg-red-50');
-                sessionStorage.setItem('diario_token', token);
-                document.getElementById('login-overlay').style.display = 'none';
-                unlockScroll();
-                iniciarSincronizacao();
-
-            } catch (e) {
-                errorMsg.innerText = "Token inválido ou expirado.";
-                errorMsg.classList.remove('hidden');
-                input.classList.add('border-red-500', 'bg-red-50');
-                input.value = ""; 
-                input.focus();
-            } finally {
-                btn.innerText = originalText;
-                btn.disabled = false;
-            }
+                if (response.status === 200 && data._id) {
+                    sessionStorage.setItem('diario_token', token);
+                    document.getElementById('login-overlay').classList.add('hidden');
+                    unlockScroll();
+                    iniciarSincronizacao();
+                } else { throw new Error(); }
+            } catch { document.getElementById('login-error').classList.remove('hidden'); }
         }
 
         async function apiCall(path) {
             const token = sessionStorage.getItem('diario_token');
-            try {
-                const response = await fetch(`${API_ENDPOINT}${path}`, {
-                    headers: {
-                        'token': token,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                return await response.json();
-            } catch (e) {
-                return {
-                    error: true
-                };
-            }
+            const response = await fetch(`${API_ENDPOINT}${path}`, { headers: { 'token': token } });
+            return await response.json();
         }
 
-        function getStatusConfig(statusObj) {
-            const id = parseInt(statusObj?.id);
-            const desc = (statusObj?.descricao || "").toLowerCase();
-            if (id === 3 || desc.includes("revisar")) return {
-                label: 'Revisar',
-                css: 'status-revisar',
-                text: 'text-red-600',
-                priority: 3
-            };
-            if (id === 1 || desc.includes("preenchendo")) return {
-                label: 'Pendente',
-                css: 'status-pendente',
-                text: 'text-amber-600',
-                priority: 2
-            };
-            if (id === 2 || desc.includes("aprovado")) return {
-                label: 'Aprovado',
-                css: 'status-aprovado',
-                text: 'text-emerald-700',
-                priority: 1
-            };
-            return {
-                label: '',
-                css: 'status-vazio',
-                text: 'text-gray-300',
-                priority: 0
-            };
+        function parseDateSafely(s) {
+            if (!s) return null;
+            const parts = s.includes('T') ? s.split('T')[0].split('-') : s.split('-');
+            if (parts.length < 3) return null;
+            if (parts[0].length === 4) return new Date(parts[0], parts[1]-1, parts[2], 12, 0, 0);
+            return new Date(parts[2], parts[1]-1, parts[0], 12, 0, 0);
         }
 
-        function parseDateSafely(dateStr) {
-            if (!dateStr) return null;
-            let y, m, d;
-            if (dateStr.includes('T')) {
-                [y, m, d] = dateStr.split('T')[0].split('-').map(Number);
-            } else if (dateStr.includes('/')) {
-                [d, m, y] = dateStr.split('/').map(Number);
-            } else {
-                [y, m, d] = dateStr.split('-').map(Number);
-            }
-            return new Date(y, m - 1, d, 12, 0, 0);
-        }
+        async function iniciarSincronizacao(silent = false) {
+            if (!silent) document.getElementById('loader').classList.remove('hidden');
+            const icon = document.getElementById('sync-icon-manual');
+            icon.classList.add('sync-spinning');
 
-        async function iniciarSincronizacao(isSilent = false) {
-            const syncIcon = document.getElementById('sync-icon-manual');
-            if (isSilent) {
-                syncIcon.classList.add('sync-spinning');
-            } else {
-                document.getElementById('loader').style.display = 'block';
-                document.getElementById('global-month-label').innerText = 'CARREGANDO...';
-            }
-
-            const anoAtual = new Date().getFullYear();
-            const inicioReq = `${anoAtual}-01-01`;
-            const fimReq = `${anoAtual}-12-31`;
-
-            const responseObras = await apiCall('/obras');
-            if (Array.isArray(responseObras)) {
-                todasObras = responseObras;
-                const dropdown = document.getElementById('status-dropdown');
-                dropdown.innerHTML = `<button onclick="filterByStatus('todos')" class="status-option">Todos os Status</button>`;
-                const statusUnicos = [...new Set(todasObras.map(o => o.status.descricao))];
-                statusUnicos.forEach(st => {
-                    dropdown.innerHTML += `<button onclick="filterByStatus('${st}')" class="status-option">${st}</button>`;
-                });
-                syncSelectionWithFilters();
-            }
-
+            todasObras = await apiCall('/obras');
             const results = await Promise.all(todasObras.map(async (obra) => {
-                const relsList = await apiCall(`/obras/${obra._id}/relatorios?dataInicio=${inicioReq}&dataFim=${fimReq}&limite=1000`);
-                return {
-                    obra,
-                    relsMes: Array.isArray(relsList) ? relsList : []
-                };
+                const rels = await apiCall(`/obras/${obra._id}/relatorios?limite=1000`);
+                return { obra, relsMes: Array.isArray(rels) ? rels : [] };
             }));
 
             cachedData = results;
             updateGlobalLabel();
-            document.getElementById('last-update-tag').innerText = `Atualizado às ${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`;
-            if (isSilent) syncIcon.classList.remove('sync-spinning');
-            else document.getElementById('loader').style.display = 'none';
             render();
-            startTimer();
+            
+            icon.classList.remove('sync-spinning');
+            document.getElementById('loader').classList.add('hidden');
+            document.getElementById('last-update-tag').innerText = `Atualizado às ${new Date().toLocaleTimeString()}`;
         }
 
         function updateGlobalLabel() {
-            const mesNome = globalViewDate.toLocaleString('pt-br', {
-                month: 'long'
-            });
-            const ano = globalViewDate.getFullYear();
-            document.getElementById('global-month-label').innerText = `${mesNome} ${ano}`;
-
-            const nowMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-            const viewMonth = new Date(globalViewDate.getFullYear(), globalViewDate.getMonth(), 1);
-
-            const isAtLimit = (viewMonth >= nowMonth);
-            document.getElementById('global-next-btn').disabled = isAtLimit;
-        }
-
-        function changeGlobalMonth(offset) {
-            const newDate = new Date(globalViewDate);
-            newDate.setMonth(newDate.getMonth() + offset);
-
-            const todayLimit = new Date(now.getFullYear(), now.getMonth(), 1, 23, 59, 59);
-            if (offset > 0 && newDate > todayLimit) return;
-
-            globalViewDate = newDate;
-            updateGlobalLabel();
-            render();
-        }
-
-        async function triggerBackgroundOccurrenceCheck() {
-            const mesVisivel = globalViewDate.getMonth();
-            const anoVisivel = globalViewDate.getFullYear();
-            const fimDoMesExibido = new Date(anoVisivel, mesVisivel + 1, 0, 23, 59, 59);
-            const inicioDoMesExibido = new Date(anoVisivel, mesVisivel, 1, 0, 0, 0);
-
-            const obrasVisiveis = cachedData.filter(res => {
-                const isSelected = selectedObraIds.has(res.obra._id);
-                const matchSearch = res.obra.nome.toLowerCase().includes(globalSearchTerm);
-                return isSelected && matchSearch;
-            });
-
-            const syncPromises = [];
-            for (const res of obrasVisiveis) {
-                const relsInteresse = res.relsMes.filter(r => {
-                    const dIn = parseDateSafely(r.data);
-                    const dOut = r.dataFim ? parseDateSafely(r.dataFim) : dIn;
-                    return (dIn <= fimDoMesExibido && dOut >= inicioDoMesExibido);
-                });
-                relsInteresse.forEach(r => {
-                    const fetchTask = async () => {
-                        if (reportDetailsCache[r._id]) {
-                            updateDayStripeUI(res.obra._id, r, reportDetailsCache[r._id].ocorrencias?.length > 0);
-                            return;
-                        }
-                        const det = await apiCall(`/obras/${res.obra._id}/relatorios/${r._id}`);
-                        if (det && !det.error) {
-                            reportDetailsCache[r._id] = det;
-                            updateDayStripeUI(res.obra._id, r, det.ocorrencias?.length > 0);
-                        }
-                    };
-                    syncPromises.push(fetchTask());
-                });
-            }
-            for (let i = 0; i < syncPromises.length; i += 10) {
-                await Promise.all(syncPromises.slice(i, i + 10));
-            }
-        }
-
-        function updateDayStripeUI(obraId, relatorio, hasOccurrences) {
-            let dIn = parseDateSafely(relatorio.data);
-            let dOut = relatorio.dataFim ? parseDateSafely(relatorio.dataFim) : dIn;
-            if (!dIn) return;
-            let curr = new Date(dIn);
-            let limit = 0;
-            while (curr <= dOut && limit < 32) {
-                const dataIdFormat = `${curr.getDate().toString().padStart(2,'0')}-${(curr.getMonth()+1).toString().padStart(2,'0')}-${curr.getFullYear()}`;
-                const dayEl = document.getElementById(`day-${obraId}-${dataIdFormat}`);
-                if (dayEl) {
-                    const stripe = dayEl.querySelector('.stripe-alert');
-                    if (hasOccurrences && !stripe) {
-                        const s = document.createElement('div');
-                        s.className = 'stripe-alert';
-                        dayEl.appendChild(s);
-                    } else if (!hasOccurrences && stripe) {
-                        stripe.remove();
-                    }
-                }
-                curr.setDate(curr.getDate() + 1);
-                limit++;
-            }
+            const mes = globalViewDate.toLocaleString('pt-br', { month: 'long' });
+            document.getElementById('global-month-label').innerText = `${mes} ${globalViewDate.getFullYear()}`;
         }
 
         function render() {
             const container = document.getElementById('dashboard');
             container.innerHTML = '';
-
-            const filtered = cachedData.filter(res => {
-                const isSelected = selectedObraIds.has(res.obra._id);
-                const matchSearch = res.obra.nome.toLowerCase().includes(globalSearchTerm);
-                return isSelected && matchSearch;
-            });
-
-            const statusLabel = document.getElementById('current-status-label');
-            statusLabel.innerText = `${selectedStatus === 'todos' ? 'Status: Todos' : selectedStatus} (${filtered.length})`;
+            const filtered = cachedData.filter(res => res.obra.nome.toLowerCase().includes(globalSearchTerm.toLowerCase()));
 
             filtered.forEach(res => {
                 const wrapper = document.createElement('div');
                 wrapper.innerHTML = renderCalendarItemMarkup(res);
                 container.appendChild(wrapper);
             });
-            triggerBackgroundOccurrenceCheck();
         }
 
         function renderCalendarItemMarkup(res) {
             const ano = globalViewDate.getFullYear();
             const mes = globalViewDate.getMonth();
-            const primDiaSemana = new Date(ano, mes, 1).getDay();
-            const diasNoMes = new Date(ano, mes + 1, 0).getDate();
-            const realToday = new Date();
+            const primDia = new Date(ano, mes, 1).getDay();
+            const diasMes = new Date(ano, mes + 1, 0).getDate();
             const relsMap = {};
 
             res.relsMes.forEach(r => {
-                let dIn = parseDateSafely(r.data);
-                let dOut = r.dataFim ? parseDateSafely(r.dataFim) : dIn;
-                if (dIn) {
-                    let curr = new Date(dIn);
-                    let limit = 0;
-                    while (curr <= dOut && limit < 32) {
-                        if (curr.getMonth() === mes && curr.getFullYear() === ano) {
-                            const key = `${curr.getFullYear()}-${(curr.getMonth()+1).toString().padStart(2,'0')}-${curr.getDate().toString().padStart(2,'0')}`;
-                            const confN = getStatusConfig(r.status);
-                            const confE = relsMap[key] ? getStatusConfig(relsMap[key].status) : {
-                                priority: 0
-                            };
-                            if (confN.priority >= confE.priority) relsMap[key] = r;
-                        }
-                        curr.setDate(curr.getDate() + 1);
-                        limit++;
-                    }
-                }
+                const d = parseDateSafely(r.data);
+                if (d && d.getMonth() === mes && d.getFullYear() === ano) relsMap[d.getDate()] = r;
             });
 
             let html = `
-            <div class="bg-white p-7 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col h-full">
-                <div class="flex items-center justify-between mb-8">
-                    <h3 title="${res.obra.nome}" class="font-black text-sm text-gray-800 truncate uppercase tracking-tighter w-4/5 cursor-help">${res.obra.nome}</h3>
-                    <a href="${WEB_APP_BASE}${res.obra._id}/relatorios" target="_blank" class="btn-link-externo"><i class="fas fa-external-link-alt"></i></a>
-                </div>
-                <div class="calendar-grid mb-6">
-                    <div class="calendar-header-day">D</div><div class="calendar-header-day">S</div><div class="calendar-header-day">T</div><div class="calendar-header-day">Q</div><div class="calendar-header-day">Q</div><div class="calendar-header-day">S</div><div class="calendar-header-day">S</div>`;
-            for (let i = 0; i < primDiaSemana; i++) html += `<div></div>`;
-            const todayStr = `${realToday.getFullYear()}-${(realToday.getMonth()+1).toString().padStart(2,'0')}-${realToday.getDate().toString().padStart(2,'0')}`;
-            for (let d = 1; d <= diasNoMes; d++) {
-                const dateKey = `${ano}-${(mes+1).toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}`;
-                const r = relsMap[dateKey];
-                const conf = getStatusConfig(r?.status);
-                const isToday = (dateKey === todayStr);
-                const dataIdFormat = `${d.toString().padStart(2,'0')}-${(mes+1).toString().padStart(2,'0')}-${ano}`;
-
-                let weekendClass = "";
-                if (conf.css === "status-vazio") {
-                    const dSemana = new Date(ano, mes, d).getDay();
-                    if (dSemana === 6) weekendClass = "day-sabado";
-                    else if (dSemana === 0) weekendClass = "day-domingo";
-                }
-
-                html += `<div id="day-${res.obra._id}-${dataIdFormat}" onclick="if('${r?._id || ''}') openDetails('${res.obra._id}', '${res.obra.nome.replace(/'/g, "\\'")}', ${d}, ${mes}, ${ano}, '${r?._id || ''}')" class="calendar-day ${conf.css} ${weekendClass} ${isToday ? 'day-today' : ''}">${d}</div>`;
-            }
-            html += `</div>
-                <div class="mt-auto flex flex-wrap gap-x-4 gap-y-2 opacity-70">
-                    <div class="flex items-center gap-1.5"><div class="w-2.5 h-2.5 rounded-sm bg-[#15803d]"></div><span class="text-[8px] font-black uppercase text-gray-500">Aprovado</span></div>
-                    <div class="flex items-center gap-1.5"><div class="w-2.5 h-2.5 rounded-sm bg-[#ef4444]"></div><span class="text-[8px] font-black uppercase text-gray-500">Revisar</span></div>
-                    <div class="flex items-center gap-1.5"><div class="w-2.5 h-2.5 rounded-sm bg-[#fbbf24]"></div><span class="text-[8px] font-black uppercase text-gray-500">Pendente</span></div>
-                    <div class="flex items-center gap-1.5">
-                        <div class="w-4 h-2.5 rounded-sm" style="background: repeating-linear-gradient(-45deg, #fbbf24, #fbbf24 4px, #000 4px, #000 8px);"></div>
-                        <span class="text-[8px] font-black uppercase text-gray-500">Ocorrência</span>
+            <div class="bg-white p-6 rounded-[1.5rem] border border-gray-100 shadow-sm flex flex-col h-full">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="font-black text-xs text-gray-800 truncate uppercase w-3/5">${res.obra.nome}</h3>
+                    <div class="flex gap-1">
+                        <button onclick="abrirModalImprimir('${res.obra._id}')" class="btn-action-icon" title="Imprimir Relatórios"><i class="fas fa-print"></i></button>
+                        <a href="${WEB_APP_BASE}${res.obra._id}/relatorios" target="_blank" class="btn-action-icon"><i class="fas fa-external-link-alt"></i></a>
                     </div>
                 </div>
-            </div>`;
+                <div class="calendar-grid">`;
+            
+            ['D','S','T','Q','Q','S','S'].forEach(h => html += `<div class="calendar-header-day">${h}</div>`);
+            for (let i = 0; i < primDia; i++) html += `<div></div>`;
+            for (let d = 1; d <= diasMes; d++) {
+                const r = relsMap[d];
+                const statusClass = r ? (r.status.id === 2 ? 'status-aprovado' : (r.status.id === 3 ? 'status-revisar' : 'status-pendente')) : 'status-vazio';
+                html += `<div onclick="if('${r?._id || ''}') openDetails('${res.obra._id}', '${res.obra.nome.replace(/'/g,"")}', ${d}, ${mes}, ${ano}, '${r?._id}')" class="calendar-day ${statusClass}">${d}</div>`;
+            }
+            html += `</div></div>`;
             return html;
         }
 
-        async function openDetails(obraId, nomeObra, dia, mes, ano, reportId) {
-            lockScroll();
-            const displayDate = `${dia.toString().padStart(2, '0')}/${(mes + 1).toString().padStart(2, '0')}/${ano}`;
-            document.getElementById('side-obra-nome').innerText = nomeObra;
-            document.getElementById('side-obra-link-container').innerHTML = `<a href="${WEB_APP_BASE}${obraId}/relatorios/${reportId}" target="_blank" class="btn-link-externo"><i class="fas fa-external-link-alt"></i></a>`;
-            document.getElementById('side-data').innerText = displayDate;
-            document.getElementById('side-overlay').classList.add('open');
-            document.getElementById('side-panel').classList.add('open');
+        // --- SISTEMA DE IMPRESSÃO (ESTILO IMAGEM) ---
 
-            document.getElementById('side-refresh-btn').onclick = () => refreshSpecificReport(obraId, reportId);
+        function abrirModalImprimir(obraId) {
+            currentObraImprimir = cachedData.find(d => d.obra._id === obraId);
+            const container = document.getElementById('lista-relatorios-imprimir');
+            container.innerHTML = '';
+            document.getElementById('check-all-reports').checked = false;
 
-            const cache = reportDetailsCache[reportId];
-            if (cache && cache.atividades) {
-                renderDetailsContent(cache);
+            const mes = globalViewDate.getMonth();
+            const ano = globalViewDate.getFullYear();
+            
+            const relsDoMes = currentObraImprimir.relsMes
+                .filter(r => {
+                    const d = parseDateSafely(r.data);
+                    return d && d.getMonth() === mes && d.getFullYear() === ano;
+                })
+                .sort((a,b) => new Date(b.data) - new Date(a.data));
+
+            if (relsDoMes.length === 0) {
+                container.innerHTML = `<div class="p-8 text-center text-gray-400 text-xs uppercase font-bold">Nenhum relatório encontrado para este período</div>`;
             } else {
-                document.getElementById('side-content').innerHTML = `<div class="flex flex-col items-center justify-center py-20"><div class="w-8 h-8 border-4 border-green-700 border-t-transparent rounded-full animate-spin mb-4"></div><span class="text-[9px] font-black uppercase">Carregando dados técnicos...</span></div>`;
-            }
-
-            try {
-                let det = await apiCall(`/obras/${obraId}/relatorios/${reportId}`);
-                if (det && !det.error) {
-                    reportDetailsCache[reportId] = det;
-                    renderDetailsContent(det);
-                }
-            } catch (e) {
-                console.error("Erro ao carregar detalhes", e);
-            }
-        }
-
-        async function refreshSpecificReport(obraId, reportId) {
-            const btn = document.getElementById('side-refresh-btn');
-            const icon = btn.querySelector('i');
-            icon.classList.add('sync-spinning');
-
-            try {
-                let det = await apiCall(`/obras/${obraId}/relatorios/${reportId}`);
-                if (det && !det.error) {
-                    reportDetailsCache[reportId] = det;
-                    renderDetailsContent(det);
-                    updateDayStripeUI(obraId, det, det.ocorrencias?.length > 0);
-                } else {
-                    alert("Erro ao atualizar dados deste dia.");
-                }
-            } catch (e) {
-                console.error(e);
-            } finally {
-                icon.classList.remove('sync-spinning');
-            }
-        }
-
-        function renderDetailsContent(det) {
-            const conf = getStatusConfig(det.status);
-            let html = `<div class="mb-8 p-4 rounded-2xl border-2 ${conf.text.replace('text', 'border')} ${conf.css.replace('status', 'bg')}/5 flex items-center justify-between"><span class="text-[10px] font-black uppercase text-gray-400 tracking-widest">Status Geral</span><span class="px-4 py-1.5 rounded-xl ${conf.css} text-[9px] font-black uppercase">${conf.label}</span></div>`;
-            const section = (icon, label, count, content) => `<details class="details-section"><summary><div class="flex items-center gap-3"><i class="${icon} text-green-700"></i>${label}</div><span>${count}</span></summary><div class="p-5 text-xs text-gray-600">${content}</div></details>`;
-            const padrao = det.maoDeObra?.padrao?.map(m => `<div class="flex justify-between py-1 border-b"><span>${m.descricao}</span><b>${m.quantidade}</b></div>`).join('') || '';
-            const perso = det.maoDeObra?.personalizada?.map(m => `<div class="flex justify-between py-1 border-b"><span>${m.nome} <small class="text-gray-400">(${m.funcao})</small></span><b>1</b></div>`).join('') || '';
-            html += section('fas fa-users', 'Efetivo em Campo', (det.maoDeObra?.padrao?.length || 0) + (det.maoDeObra?.personalizada?.length || 0), (padrao + perso) || 'Nenhuma informação.');
-            html += section('fas fa-tractor', 'Maquinário', det.equipamentos?.length || 0, det.equipamentos?.map(e => `<div class="flex justify-between py-1 border-b"><span>${e.descricao}</span><b>${e.quantidade || 1}</b></div>`).join('') || 'Nenhum equipamento.');
-            html += section('fas fa-tasks', 'Serviços Executados', det.atividades?.length || 0, det.atividades?.map(a => `<div class="mb-2 pb-1 border-b"><b>${a.descricao}</b><br><small class="text-green-700 uppercase font-bold">${a.status?.descricao} - ${a.porcentagem}%</small></div>`).join('') || 'Nenhuma atividade.');
-            html += section('fas fa-camera', 'Galeria de Fotos', det.galeriaDeFotos?.length || 0, `<div class="grid grid-cols-2 gap-2">${det.galeriaDeFotos?.map(f => `<img src="${f.urlMiniatura || f.url}" class="w-full aspect-square object-cover rounded-xl" loading="lazy">`).join('')}</div>` || 'Nenhuma foto.');
-            if (det.ocorrencias?.length > 0) {
-                html += `<div class="mt-6 text-[9px] font-black text-red-500 uppercase tracking-widest mb-3">Ocorrências</div>`;
-                det.ocorrencias.forEach(o => {
-                    html += `<div class="p-4 bg-red-50 border border-red-100 rounded-2xl mb-2 text-xs font-bold text-red-700">${o.descricao}</div>`;
+                relsDoMes.forEach(r => {
+                    const dataFmt = parseDateSafely(r.data).toLocaleDateString('pt-BR');
+                    const div = document.createElement('div');
+                    div.className = "flex items-center gap-4 px-4 py-3 border-b hover:bg-gray-50 transition-all";
+                    div.innerHTML = `
+                        <input type="checkbox" value="${r._id}" class="custom-checkbox report-checkbox">
+                        <span class="text-xs text-gray-600 w-24 font-medium">${dataFmt}</span>
+                        <span class="text-xs text-gray-400 w-12 font-medium">${r.numero || '-'}</span>
+                        <div class="flex-grow">
+                            <span class="px-2 py-0.5 rounded bg-orange-400 text-[9px] font-bold text-white uppercase">${r.status.descricao}</span>
+                        </div>
+                        <span class="text-[10px] text-gray-400 font-medium">Relatório Diário de Obra (RDO)</span>
+                    `;
+                    container.appendChild(div);
                 });
             }
-            document.getElementById('side-content').innerHTML = html;
+
+            lockScroll();
+            document.getElementById('modal-imprimir').classList.remove('hidden');
         }
 
-        function closeDetails() {
-            unlockScroll();
-            document.getElementById('side-overlay').classList.remove('open');
-            document.getElementById('side-panel').classList.remove('open');
+        function fecharModalImprimir() { unlockScroll(); document.getElementById('modal-imprimir').classList.add('hidden'); }
+
+        function toggleSelectAllReports(el) {
+            document.querySelectorAll('.report-checkbox').forEach(c => c.checked = el.checked);
         }
 
-        function startTimer() {
-            if (autoRefreshInterval) clearInterval(autoRefreshInterval);
-            autoRefreshInterval = setInterval(() => iniciarSincronizacao(true), 300000);
-        }
-        window.onclick = function(event) {
-            if (!event.target.closest('.relative')) {
-                document.getElementById('status-dropdown').classList.remove('open');
+        async function gerarPdfConsolidado() {
+            const selectedIds = Array.from(document.querySelectorAll('.report-checkbox:checked')).map(c => c.value);
+            if (selectedIds.length === 0) return alert("Selecione os dias primeiro.");
+
+            mostrarAviso("Gerando PDF... Por favor aguarde.");
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            let first = true;
+
+            for (const id of selectedIds) {
+                if (!first) doc.addPage();
+                first = false;
+
+                let det = reportDetailsCache[id];
+                if (!det) {
+                    det = await apiCall(`/obras/${currentObraImprimir.obra._id}/relatorios/${id}`);
+                    reportDetailsCache[id] = det;
+                }
+
+                const dataStr = parseDateSafely(det.data).toLocaleDateString('pt-BR');
+                
+                doc.setFillColor(240, 240, 240);
+                doc.rect(10, 10, 190, 15, 'F');
+                doc.setFont("helvetica", "bold"); doc.setFontSize(11);
+                doc.text(`PACÒPEDRA - RDO: ${currentObraImprimir.obra.nome.toUpperCase()}`, 15, 18);
+                doc.setFontSize(9); doc.text(`DATA: ${dataStr} | NÚMERO: ${det.numero || '-'} | STATUS: ${det.status.descricao.toUpperCase()}`, 15, 23);
+
+                doc.text("ATIVIDADES:", 15, 35);
+                const atvs = det.atividades?.map(a => [a.descricao, `${a.porcentagem}%`, a.status?.descricao]) || [["Sem dados", "", ""]];
+                doc.autoTable({ startY: 38, head: [['Serviço', '%', 'Status']], body: atvs, theme: 'grid', styles: { fontSize: 8 }, headStyles: { fillColor: [21, 128, 61] } });
+
+                const lastY = doc.lastAutoTable.cursor.y + 10;
+                doc.text("MÃO DE OBRA / EQUIPAMENTOS:", 15, lastY);
+                const mao = det.maoDeObra?.padrao?.map(m => [m.descricao, m.quantidade]) || [];
+                const equi = det.equipamentos?.map(e => [e.descricao, e.quantidade || 1]) || [];
+                const combo = [...mao, ...equi];
+                doc.autoTable({ startY: lastY + 3, head: [['Descrição', 'Qtd']], body: combo.length ? combo : [["Sem registros", "0"]], theme: 'grid', styles: { fontSize: 8 }, headStyles: { fillColor: [71, 85, 105] } });
             }
+
+            doc.save(`RDO_Consolidado_${currentObraImprimir.obra.nome}.pdf`);
+            fecharModalImprimir();
+            mostrarAviso("Download concluído!");
         }
+
+        // --- PENDÊNCIAS ---
+
+        async function abrirModalPendencias() {
+            lockScroll();
+            document.getElementById('modal-pendencias').classList.remove('hidden');
+            const container = document.getElementById('container-texto-whatsapp');
+            container.innerText = "Calculando pendências...";
+            
+            try {
+                await iniciarSincronizacao(true);
+                // Lógica de pendências simplificada para este exemplo
+                let texto = `*PENDÊNCIAS - ${globalViewDate.toLocaleString('pt-br', {month:'long'}).toUpperCase()}*\n\n`;
+                cachedData.forEach(res => {
+                    const pendentes = res.relsMes.filter(r => r.status.id === 1).length;
+                    if (pendentes > 0) texto += `• ${res.obra.nome}: ${pendentes} relatórios em aberto.\n`;
+                });
+                container.innerText = texto || "Tudo em dia!";
+            } catch (e) { container.innerText = "Erro ao carregar."; }
+        }
+
+        function fecharModalPendencias() { unlockScroll(); document.getElementById('modal-pendencias').classList.add('hidden'); }
+        function handleGlobalSearch() { globalSearchTerm = document.getElementById('search-input').value; render(); }
+        function changeGlobalMonth(offset) { globalViewDate.setMonth(globalViewDate.getMonth() + offset); updateGlobalLabel(); render(); }
+        function sair() { sessionStorage.removeItem('diario_token'); location.reload(); }
+
+        async function openDetails(obraId, nome, d, m, a, rid) {
+            lockScroll();
+            document.getElementById('side-obra-nome').innerText = nome;
+            document.getElementById('side-data').innerText = `${d}/${m+1}/${a}`;
+            document.getElementById('side-panel').classList.add('open');
+            document.getElementById('side-overlay').classList.add('open');
+            document.getElementById('side-content').innerHTML = "Carregando detalhes...";
+            
+            const det = await apiCall(`/obras/${obraId}/relatorios/${rid}`);
+            let html = `<div class="space-y-3">`;
+            det.atividades?.forEach(atv => {
+                html += `<div class="p-4 bg-gray-50 rounded-xl border">
+                    <p class="font-bold text-xs uppercase">${atv.descricao}</p>
+                    <p class="text-green-700 font-black text-xl">${atv.porcentagem}%</p>
+                </div>`;
+            });
+            document.getElementById('side-content').innerHTML = html + `</div>`;
+        }
+
+        function closeDetails() { unlockScroll(); document.getElementById('side-panel').classList.remove('open'); document.getElementById('side-overlay').classList.remove('open'); }
 
         window.onload = () => {
-            lockScroll();
-            document.getElementById('login-overlay').style.display = 'flex';
+            if (!sessionStorage.getItem('diario_token')) {
+                lockScroll();
+                document.getElementById('login-overlay').style.display = 'flex';
+            } else {
+                iniciarSincronizacao();
+            }
         };
     </script>
 </body>
