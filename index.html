@@ -34,6 +34,18 @@
     </script>
 
     <style>
+
+    /* ANIMAÇÃO DE TREMOR (ERRO LOGIN) */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+        
+        .animate-shake {
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        
         body {
             background-color: #f8fafc;
             overflow-x: hidden;
@@ -329,8 +341,8 @@
             <p class="text-gray-500 mb-8 font-medium"></p>
 
             <!-- NOVO: AVISO DE ERRO INTERNO -->
-            <div id="login-error" class="hidden mb-6 bg-red-50 border border-red-100 text-red-600 p-4 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 animate-bounce">
-                <i class="fas fa-exclamation-triangle"></i> Por favor, insira o token
+            <div id="login-error" class="hidden mb-6 bg-red-50 border border-red-100 text-red-600 p-4 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2">
+                <i class="fas fa-exclamation-triangle"></i> Por favor, insira o token.
             </div>
 
             <input type="password" id="popup-token" class="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none mb-6 font-mono text-center tracking-widest focus:border-green-700 transition-all block mt-10px" placeholder="INSIRA O TOKEN DE ACESSO">
@@ -852,58 +864,66 @@
         async function realizarLogin() {
             const input = document.getElementById('popup-token');
             const errorMsg = document.getElementById('login-error');
-            const btn = event.target; // Captura o botão clicado
+            const errorText = document.getElementById('error-text');
+            const btn = event.target; 
             const token = input.value.trim();
-
-            // 1. Verifica se o campo está vazio
-            if (!token) {
-                errorMsg.innerText = "Por favor, insira o token.";
-                errorMsg.classList.remove('hidden');
-                input.classList.add('border-red-500', 'bg-red-50');
-                input.focus();
-                return;
-            }
-
-            // Estado de carregamento no botão
+    
+        // Função para disparar o tremor e mostrar a mensagem
+        const dispararErro = (mensagem) => {
+            errorText.innerText = mensagem;
+            errorMsg.classList.remove('hidden');
+            
+        // Reset da animação: remove e força o reflow para poder tremer de novo
+            errorMsg.classList.remove('animate-shake');
+            void errorMsg.offsetWidth; 
+            errorMsg.classList.add('animate-shake');
+    
+            input.classList.add('border-red-500', 'bg-red-50');
+            input.focus();
+        };
+    
+        // 1. Verificação de Campo Vazio
+        if (!token) {
+            dispararErro("Por favor, insira o token");
+            return;
+        }
+    
+        // Estado de carregamento
             const originalText = btn.innerText;
             btn.innerText = "VALIDANDO...";
             btn.disabled = true;
-
-            try {
-                // 2. Tenta uma chamada simples na API para ver se o token é real
-                const response = await fetch(`${API_ENDPOINT}/empresa`, {
-                    headers: {
-                        'token': token,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                const data = await response.json();
-
-                // 3. Se a API retornar erro ou não retornar o ID da empresa, o token é inválido
-                if (response.status !== 200 || !data._id) {
-                    throw new Error("Invalido");
+    
+        try {
+            const response = await fetch(`${API_ENDPOINT}/empresa`, {
+                headers: {
+                    'token': token,
+                    'Content-Type': 'application/json'
                 }
-
-                // Se chegou aqui, o token é válido
-                errorMsg.classList.add('hidden');
-                input.classList.remove('border-red-500', 'bg-red-50');
-                sessionStorage.setItem('diario_token', token);
-                document.getElementById('login-overlay').style.display = 'none';
-                unlockScroll();
-                iniciarSincronizacao();
-
-            } catch (e) {
-                // Exibe erro de token inválido
-                errorMsg.innerText = "Token inválido ou expirado.";
-                errorMsg.classList.remove('hidden');
-                input.classList.add('border-red-500', 'bg-red-50');
-                input.value = ""; // Limpa o campo
-                input.focus();
-            } finally {
-                btn.innerText = originalText;
-                btn.disabled = false;
+            });
+            const data = await response.json();
+    
+            // Se o token for inválido na API
+            if (response.status !== 200 || !data._id) {
+                throw new Error("Invalido");
             }
+    
+            // Sucesso no Login
+            errorMsg.classList.add('hidden');
+            input.classList.remove('border-red-500', 'bg-red-50');
+            sessionStorage.setItem('diario_token', token);
+            document.getElementById('login-overlay').style.display = 'none';
+            unlockScroll();
+            iniciarSincronizacao();
+    
+        } catch (e) {
+            // 2. Verificação de Token Inexistente/Errado
+            dispararErro("Token inválido ou expirado");
+            input.value = ""; // Limpa o campo para nova tentativa
+        } finally {
+            btn.innerText = originalText;
+            btn.disabled = false;
         }
+    }
 
         function sair() {
             sessionStorage.removeItem('diario_token');
