@@ -34,18 +34,6 @@
     </script>
 
     <style>
-
-    /* ANIMAÇÃO DE TREMOR (ERRO LOGIN) */
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-8px); }
-            40%, 80% { transform: translateX(8px); }
-        }
-        
-        .animate-shake {
-            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
-        }
-        
         body {
             background-color: #f8fafc;
             overflow-x: hidden;
@@ -276,6 +264,17 @@
             }
         }
 
+        /* NOVA ANIMAÇÃO DE TREMOR */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+
+        .animate-shake {
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
         .modal-base {
             backdrop-filter: blur(8px);
             background-color: rgba(2, 44, 34, 0.7);
@@ -340,13 +339,14 @@
             <h2 class="text-3xl font-black text-gray-900 tracking-tight mb-2">Acesso Restrito</h2>
             <p class="text-gray-500 mb-8 font-medium"></p>
 
-            <!-- NOVO: AVISO DE ERRO INTERNO -->
+            <!-- AVISO DE ERRO COM ID DE TEXTO E SEM O BOUNCE -->
             <div id="login-error" class="hidden mb-6 bg-red-50 border border-red-100 text-red-600 p-4 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2">
-                <i class="fas fa-exclamation-triangle"></i> <span id="error-text">Erro</span>
+                <i class="fas fa-exclamation-triangle"></i> <span id="error-text">Por favor, insira o token</span>
             </div>
 
             <input type="password" id="popup-token" class="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none mb-6 font-mono text-center tracking-widest focus:border-green-700 transition-all block mt-10px" placeholder="INSIRA O TOKEN DE ACESSO">
-            <button onclick="realizarLogin()" class="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-5 rounded-2xl shadow-xl transition-all active:scale-95 uppercase tracking-widest">Acessar Painel</button>
+            
+            <button id="btn-login-acessar" onclick="realizarLogin()" class="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-5 rounded-2xl shadow-xl transition-all active:scale-95 uppercase tracking-widest">Acessar Painel</button>
         </div>
     </div>
 
@@ -696,7 +696,6 @@
             container.innerText = "Sincronizando dados atuais...";
 
             try {
-                // Sincroniza dados da API antes de gerar pendências
                 await iniciarSincronizacao(true);
 
                 const respPlanilha = await fetch(LINK_PLANILHA_CSV + "&cache_buster=" + Date.now(), {
@@ -815,7 +814,6 @@
             }
         }
 
-        // Função auxiliar para mostrar o aviso
         function mostrarAviso(mensagem) {
             const toast = document.getElementById('toast-sucesso');
             const toastText = document.getElementById('toast-text');
@@ -847,8 +845,6 @@
             a.download = `DIA ${hoje.getDate()}.txt`;
             a.click();
             window.URL.revokeObjectURL(url);
-
-            // Mostra o aviso de download
             mostrarAviso("DOWNLOAD CONCLUÍDO!");
         }
 
@@ -865,65 +861,59 @@
             const input = document.getElementById('popup-token');
             const errorMsg = document.getElementById('login-error');
             const errorText = document.getElementById('error-text');
-            const btn = event.target; 
+            const btn = document.getElementById('btn-login-acessar');
             const token = input.value.trim();
-    
-        // Função para disparar o tremor e mostrar a mensagem
-        const dispararErro = (mensagem) => {
-            errorText.innerText = mensagem;
-            errorMsg.classList.remove('hidden');
-            
-        // Reset da animação: remove e força o reflow para poder tremer de novo
-            errorMsg.classList.remove('animate-shake');
-            void errorMsg.offsetWidth; 
-            errorMsg.classList.add('animate-shake');
-    
-            input.classList.add('border-red-500', 'bg-red-50');
-            input.focus();
-        };
-    
-        // 1. Verificação de Campo Vazio
-        if (!token) {
-            dispararErro("Por favor, insira o token");
-            return;
-        }
-    
-        // Estado de carregamento
-            const originalText = btn.innerText;
-            btn.innerText = "CARREGANDO...";
-            btn.disabled = true;
-    
-        try {
-            const response = await fetch(`${API_ENDPOINT}/empresa`, {
-                headers: {
-                    'token': token,
-                    'Content-Type': 'application/json'
-                }
-            });
-            const data = await response.json();
-    
-            // Se o token for inválido na API
-            if (response.status !== 200 || !data._id) {
-                throw new Error("Invalido");
+
+            const dispararErro = (mensagem) => {
+                errorText.innerText = mensagem;
+                errorMsg.classList.remove('hidden');
+                
+                // Reset da animação para garantir o tremor em cada tentativa
+                errorMsg.classList.remove('animate-shake');
+                void errorMsg.offsetWidth; 
+                errorMsg.classList.add('animate-shake');
+
+                input.classList.add('border-red-500', 'bg-red-50');
+                input.focus();
+            };
+
+            if (!token) {
+                dispararErro("Por favor, insira o token");
+                return;
             }
-    
-            // Sucesso no Login
-            errorMsg.classList.add('hidden');
-            input.classList.remove('border-red-500', 'bg-red-50');
-            sessionStorage.setItem('diario_token', token);
-            document.getElementById('login-overlay').style.display = 'none';
-            unlockScroll();
-            iniciarSincronizacao();
-    
-        } catch (e) {
-            // 2. Verificação de Token Inexistente/Errado
-            dispararErro("Token inválido ou expirado");
-            input.value = ""; // Limpa o campo para nova tentativa
-        } finally {
-            btn.innerText = originalText;
-            btn.disabled = false;
+
+            const originalText = btn.innerText;
+            btn.innerText = "VALIDANDO...";
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_ENDPOINT}/empresa`, {
+                    headers: {
+                        'token': token,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+
+                if (response.status !== 200 || !data._id) {
+                    throw new Error("Invalido");
+                }
+
+                errorMsg.classList.add('hidden');
+                input.classList.remove('border-red-500', 'bg-red-50');
+                sessionStorage.setItem('diario_token', token);
+                document.getElementById('login-overlay').style.display = 'none';
+                unlockScroll();
+                iniciarSincronizacao();
+
+            } catch (e) {
+                dispararErro("Token inválido ou expirado");
+                input.value = ""; 
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
         }
-    }
 
         function sair() {
             sessionStorage.removeItem('diario_token');
@@ -1249,8 +1239,6 @@
                 if (det && !det.error) {
                     reportDetailsCache[reportId] = det;
                     renderDetailsContent(det);
-
-                    // Sincroniza a listra no calendário no mesmo momento da atualização
                     updateDayStripeUI(obraId, det, det.ocorrencias?.length > 0);
                 } else {
                     alert("Erro ao atualizar dados deste dia.");
@@ -1291,15 +1279,25 @@
             if (autoRefreshInterval) clearInterval(autoRefreshInterval);
             autoRefreshInterval = setInterval(() => iniciarSincronizacao(true), 300000);
         }
+
         window.onclick = function(event) {
             if (!event.target.closest('.relative')) {
-                document.getElementById('status-dropdown').classList.remove('open');
+                const drop = document.getElementById('status-dropdown');
+                if(drop) drop.classList.remove('open');
             }
         }
 
         window.onload = () => {
             lockScroll();
             document.getElementById('login-overlay').style.display = 'flex';
+            
+            // ATIVAR A TECLA ENTER NO CAMPO DE TOKEN
+            document.getElementById('popup-token').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    realizarLogin();
+                }
+            });
         };
     </script>
 </body>
