@@ -394,11 +394,14 @@
                 </div>
             </div>
             <div class="p-6 border-t bg-gray-50 flex gap-3">
+                <button onclick="atualizarListaPendencias(true)" class="flex-1 bg-blue-600 hover:opacity-90 text-white font-black py-4 rounded-2xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-3">
+                    <i id="pendencias-sync-icon" class="fas fa-sync-alt"></i> ATUALIZAR
+                </button>
                 <button onclick="copiarTextoWhatsApp()" class="flex-1 btn-copy hover:opacity-90 text-white font-black py-4 rounded-2xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-3">
-                    <i class="fas fa-copy text-xl"></i> COPIAR TEXTO
+                    <i class="fas fa-copy text-xl"></i> COPIAR
                 </button>
                 <button onclick="downloadTextoPendencias()" class="flex-1 btn-download hover:opacity-90 text-white font-black py-4 rounded-2xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-3">
-                    <i class="fas fa-file-download text-xl"></i> DOWNLOAD (.TXT)
+                    <i class="fas fa-file-download text-xl"></i> DOWNLOAD
                 </button>
             </div>
         </div>
@@ -690,10 +693,22 @@
         async function abrirModalPendencias() {
             lockScroll();
             document.getElementById('modal-pendencias').classList.remove('hidden');
+            // Chamada inicial (com loader de texto)
+            atualizarListaPendencias(false);
+        }
+
+        async function atualizarListaPendencias(isRefresh = false) {
             const container = document.getElementById('container-texto-whatsapp');
-            container.innerText = "Sincronizando dados atuais...";
+            const refreshIcon = document.getElementById('pendencias-sync-icon');
+
+            if (!isRefresh) {
+                container.innerText = "Sincronizando dados atuais...";
+            }
+            
+            if (refreshIcon) refreshIcon.classList.add('sync-spinning');
 
             try {
+                // Sincroniza API em background
                 await iniciarSincronizacao(true);
 
                 const respPlanilha = await fetch(LINK_PLANILHA_CSV + "&cache_buster=" + Date.now(), {
@@ -806,9 +821,14 @@
                     texto += `\n`;
                 });
                 container.innerText = texto || "✅ Nenhuma pendência encontrada!";
+                
+                if (isRefresh) mostrarAviso("DADOS ATUALIZADOS!");
+
             } catch (e) {
                 container.innerText = "Erro ao buscar dados.";
                 console.error(e);
+            } finally {
+                if (refreshIcon) refreshIcon.classList.remove('sync-spinning');
             }
         }
 
@@ -977,7 +997,7 @@
         async function iniciarSincronizacao(isSilent = false) {
             const syncIcon = document.getElementById('sync-icon-manual');
             if (isSilent) {
-                syncIcon.classList.add('sync-spinning');
+                if(syncIcon) syncIcon.classList.add('sync-spinning');
             } else {
                 document.getElementById('loader').style.display = 'block';
                 document.getElementById('global-month-label').innerText = 'CARREGANDO...';
@@ -1009,9 +1029,14 @@
 
             cachedData = results;
             updateGlobalLabel();
-            document.getElementById('last-update-tag').innerText = `Atualizado às ${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`;
-            if (isSilent) syncIcon.classList.remove('sync-spinning');
-            else document.getElementById('loader').style.display = 'none';
+            const tag = document.getElementById('last-update-tag');
+            if(tag) tag.innerText = `Atualizado às ${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`;
+            
+            if (isSilent) {
+                if(syncIcon) syncIcon.classList.remove('sync-spinning');
+            } else {
+                document.getElementById('loader').style.display = 'none';
+            }
             render();
             startTimer();
         }
@@ -1116,7 +1141,7 @@
             });
 
             const statusLabel = document.getElementById('current-status-label');
-            statusLabel.innerText = `${selectedStatus === 'todos' ? 'Status: Todos' : selectedStatus} (${filtered.length})`;
+            if(statusLabel) statusLabel.innerText = `${selectedStatus === 'todos' ? 'Status: Todos' : selectedStatus} (${filtered.length})`;
 
             filtered.forEach(res => {
                 const wrapper = document.createElement('div');
@@ -1170,7 +1195,7 @@
                 const r = relsMap[dateKey];
                 const conf = getStatusConfig(r?.status);
                 const isToday = (dateKey === todayStr);
-                const dataIdFormat = `${d.toString().padStart(2,'0')}-${(mes+1).toString().padStart(2,'0')}-${ano}`;
+                const dataIdFormat = `${d.toString().padStart(2, '0')}-${(mes+1).toString().padStart(2, '0')}-${ano}`;
 
                 let weekendClass = "";
                 if (conf.css === "status-vazio") {
@@ -1282,16 +1307,12 @@
                 if(drop) drop.classList.remove('open');
             }
 
-            // LOGICA: Clique fora dos modais fecha-os (exceto login)
+            // Clique fora dos modais fecha-os
             const modalSelecao = document.getElementById('modal-selecao-obras');
-            if (event.target === modalSelecao) {
-                fecharModalSelecao();
-            }
+            if (event.target === modalSelecao) fecharModalSelecao();
 
             const modalPendencias = document.getElementById('modal-pendencias');
-            if (event.target === modalPendencias) {
-                fecharModalPendencias();
-            }
+            if (event.target === modalPendencias) fecharModalPendencias();
         }
 
         window.onload = () => {
