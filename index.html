@@ -386,7 +386,14 @@
         <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-300">
             <div class="p-6 border-b flex justify-between items-center bg-gray-50">
                 <h2 class="text-xl font-black uppercase tracking-tighter">Pendências de Relatórios</h2>
-                <button onclick="fecharModalPendencias()" class="text-gray-400 hover:text-gray-600 transition-all"><i class="fas fa-times text-xl"></i></button>
+                <div class="flex items-center gap-4">
+                    <button onclick="atualizarListaPendencias(true)" class="text-emerald-700 hover:text-emerald-900 transition-all" title="Atualizar dados">
+                        <i id="pendencias-sync-icon" class="fas fa-sync-alt text-lg"></i>
+                    </button>
+                    <button onclick="fecharModalPendencias()" class="text-gray-400 hover:text-gray-600 transition-all">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
             </div>
             <div class="p-8 overflow-y-auto max-h-[60vh]">
                 <div id="container-texto-whatsapp" class="bg-gray-900 text-emerald-400 p-6 rounded-2xl font-mono text-xs whitespace-pre-wrap leading-relaxed border border-gray-800 shadow-inner">
@@ -394,9 +401,6 @@
                 </div>
             </div>
             <div class="p-6 border-t bg-gray-50 flex gap-3">
-                <button onclick="atualizarListaPendencias(true)" class="flex-1 bg-blue-600 hover:opacity-90 text-white font-black py-4 rounded-2xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-3">
-                    <i id="pendencias-sync-icon" class="fas fa-sync-alt"></i> ATUALIZAR
-                </button>
                 <button onclick="copiarTextoWhatsApp()" class="flex-1 btn-copy hover:opacity-90 text-white font-black py-4 rounded-2xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-3">
                     <i class="fas fa-copy text-xl"></i> COPIAR
                 </button>
@@ -693,7 +697,6 @@
         async function abrirModalPendencias() {
             lockScroll();
             document.getElementById('modal-pendencias').classList.remove('hidden');
-            // Chamada inicial (com loader de texto)
             atualizarListaPendencias(false);
         }
 
@@ -708,7 +711,6 @@
             if (refreshIcon) refreshIcon.classList.add('sync-spinning');
 
             try {
-                // Sincroniza API em background
                 await iniciarSincronizacao(true);
 
                 const respPlanilha = await fetch(LINK_PLANILHA_CSV + "&cache_buster=" + Date.now(), {
@@ -1301,16 +1303,12 @@
         }
 
         window.onclick = function(event) {
-            // Fecha Dropdown de Status
             if (!event.target.closest('.relative')) {
                 const drop = document.getElementById('status-dropdown');
                 if(drop) drop.classList.remove('open');
             }
-
-            // Clique fora dos modais fecha-os
             const modalSelecao = document.getElementById('modal-selecao-obras');
             if (event.target === modalSelecao) fecharModalSelecao();
-
             const modalPendencias = document.getElementById('modal-pendencias');
             if (event.target === modalPendencias) fecharModalPendencias();
         }
@@ -1318,7 +1316,6 @@
         window.onload = () => {
             lockScroll();
             document.getElementById('login-overlay').style.display = 'flex';
-            
             document.getElementById('popup-token').addEventListener('keydown', function(e) {
                 if (e.key === 'Enter') {
                     e.preventDefault();
