@@ -1259,6 +1259,7 @@
             document.getElementById('side-overlay').classList.add('open');
             document.getElementById('side-panel').classList.add('open');
 
+            // Passamos os componentes da data para que o refresh possa recalcular o "dono" do dia
             document.getElementById('side-refresh-btn').onclick = () => refreshSpecificReport(obraId, dia, mes, ano);
 
             const cache = reportDetailsCache[reportId];
@@ -1304,7 +1305,7 @@
                         } else {
                             const isPeriodN = r.dataFim && r.dataFim !== r.data;
                             const isPeriodE = currentReport.dataFim && currentReport.dataFim !== currentReport.data;
-                            // Individual ganha do Período
+                            // REGRA: Individual ganha do Período
                             if (!isPeriodN && isPeriodE) currentReport = r;
                             else if (getStatusConfig(r.status).priority > getStatusConfig(currentReport.status).priority) currentReport = r;
                         }
@@ -1321,7 +1322,7 @@
                         document.getElementById('side-obra-link-container').innerHTML = `<a href="${WEB_APP_BASE}${obraId}/relatorios/${currentReport._id}" target="_blank" class="btn-link-externo"><i class="fas fa-external-link-alt"></i></a>`;
                     }
                 } else {
-                    document.getElementById('side-content').innerHTML = `<div class="p-8 text-center text-gray-400 text-xs font-black uppercase">Relatório não encontrado.</div>`;
+                    document.getElementById('side-content').innerHTML = `<div class="p-8 text-center text-gray-400 text-xs font-black uppercase">Nenhum relatório encontrado para este dia.</div>`;
                 }
             } catch (e) {
                 console.error(e);
