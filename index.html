@@ -1072,9 +1072,7 @@
         async function triggerBackgroundOccurrenceCheck() {
             const mesVisivel = globalViewDate.getMonth();
             const anoVisivel = globalViewDate.getFullYear();
-            const fimDoMesExibido = new Date(anoVisivel, mesVisivel + 1, 0, 23, 59, 59);
-            const inicioDoMesExibido = new Date(anoVisivel, mesVisivel, 1, 0, 0, 0);
-
+            
             const obrasVisiveis = cachedData.filter(res => {
                 const isSelected = selectedObraIds.has(res.obra._id);
                 const matchSearch = res.obra.nome.toLowerCase().includes(globalSearchTerm);
@@ -1083,21 +1081,65 @@
 
             const syncPromises = [];
             for (const res of obrasVisiveis) {
-                const relsInteresse = res.relsMes.filter(r => {
-                    const dIn = parseDateSafely(r.data);
-                    const dOut = r.dataFim ? parseDateSafely(r.dataFim) : dIn;
-                    return (dIn <= fimDoMesExibido && dOut >= inicioDoMesExibido);
-                });
-                relsInteresse.forEach(r => {
-                    const fetchTask = async () => {
-                        if (reportDetailsCache[r._id]) {
-                            updateDayStripeUI(res.obra._id, r, reportDetailsCache[r._id].ocorrencias?.length > 0);
-                            return;
+                // REPLICAR LÓGICA DE PRIORIDADE PARA OCORRÊNCIAS
+                const relsMap = {};
+                res.relsMes.forEach(r => {
+                    let dIn = parseDateSafely(r.data);
+                    let dOut = r.dataFim ? parseDateSafely(r.dataFim) : dIn;
+                    if (!dIn) return;
+                    let curr = new Date(dIn);
+                    let loopLimit = 0;
+                    while (curr <= dOut && loopLimit < 366) {
+                        if (curr.getMonth() === mesVisivel && curr.getFullYear() === anoVisivel) {
+                            const key = `${curr.getFullYear()}-${(curr.getMonth()+1).toString().padStart(2,'0')}-${curr.getDate().toString().padStart(2,'0')}`;
+                            const isPeriodN = r.dataFim && r.dataFim !== r.data;
+                            const existing = relsMap[key];
+                            if (!existing) {
+                                relsMap[key] = r;
+                            } else {
+                                const isPeriodE = existing.dataFim && existing.dataFim !== existing.data;
+                                if (!isPeriodN && isPeriodE) relsMap[key] = r;
+                                else if (isPeriodN && !isPeriodE) {} // Mantém o individual
+                                else {
+                                    if (getStatusConfig(r.status).priority > getStatusConfig(existing.status).priority) relsMap[key] = r;
+                                }
+                            }
                         }
-                        const det = await apiCall(`/obras/${res.obra._id}/relatorios/${r._id}`);
+                        curr.setDate(curr.getDate() + 1); loopLimit++;
+                    }
+                });
+
+                // Agora processamos apenas os relatórios que são "donos" de pelo menos um dia
+                const activeReportIds = [...new Set(Object.values(relsMap).map(r => r._id))];
+                
+                activeReportIds.forEach(rId => {
+                    const fetchTask = async () => {
+                        let det = reportDetailsCache[rId];
+                        if (!det) {
+                            det = await apiCall(`/obras/${res.obra._id}/relatorios/${rId}`);
+                            if (det && !det.error) reportDetailsCache[rId] = det;
+                        }
+                        
                         if (det && !det.error) {
-                            reportDetailsCache[r._id] = det;
-                            updateDayStripeUI(res.obra._id, r, det.ocorrencias?.length > 0);
+                            const hasOccurrences = det.ocorrencias?.length > 0;
+                            // Atualiza APENAS os dias onde este relatório é o vencedor
+                            for (const dateKey in relsMap) {
+                                if (relsMap[dateKey]._id === rId) {
+                                    const [y, m, d] = dateKey.split('-').map(Number);
+                                    const dataIdFormat = `${d.toString().padStart(2,'0')}-${m.toString().padStart(2,'0')}-${y}`;
+                                    const dayEl = document.getElementById(`day-${res.obra._id}-${dataIdFormat}`);
+                                    if (dayEl) {
+                                        const stripe = dayEl.querySelector('.stripe-alert');
+                                        if (hasOccurrences && !stripe) {
+                                            const s = document.createElement('div');
+                                            s.className = 'stripe-alert';
+                                            dayEl.appendChild(s);
+                                        } else if (!hasOccurrences && stripe) {
+                                            stripe.remove();
+                                        }
+                                    }
+                                }
+                            }
                         }
                     };
                     syncPromises.push(fetchTask());
@@ -1105,30 +1147,6 @@
             }
             for (let i = 0; i < syncPromises.length; i += 10) {
                 await Promise.all(syncPromises.slice(i, i + 10));
-            }
-        }
-
-        function updateDayStripeUI(obraId, relatorio, hasOccurrences) {
-            let dIn = parseDateSafely(relatorio.data);
-            let dOut = relatorio.dataFim ? parseDateSafely(relatorio.dataFim) : dIn;
-            if (!dIn) return;
-            let curr = new Date(dIn);
-            let limit = 0;
-            while (curr <= dOut && limit < 366) {
-                const dataIdFormat = `${curr.getDate().toString().padStart(2,'0')}-${(curr.getMonth()+1).toString().padStart(2,'0')}-${curr.getFullYear()}`;
-                const dayEl = document.getElementById(`day-${obraId}-${dataIdFormat}`);
-                if (dayEl) {
-                    const stripe = dayEl.querySelector('.stripe-alert');
-                    if (hasOccurrences && !stripe) {
-                        const s = document.createElement('div');
-                        s.className = 'stripe-alert';
-                        dayEl.appendChild(s);
-                    } else if (!hasOccurrences && stripe) {
-                        stripe.remove();
-                    }
-                }
-                curr.setDate(curr.getDate() + 1);
-                limit++;
             }
         }
 
@@ -1182,21 +1200,9 @@
                                 const confE = getStatusConfig(existing.status);
 
                                 let overwrite = false;
-                                
-                                // REGRA: Individual SEMPRE ganha de Período para "contornar" os dias
-                                if (!isPeriodN && isPeriodE) {
-                                    overwrite = true;
-                                } 
-                                // Se o novo é período e o que já está lá é individual, não mexe
-                                else if (isPeriodN && !isPeriodE) {
-                                    overwrite = false;
-                                } 
-                                // Se forem do mesmo tipo (dois individuais ou dois períodos), prevalece o status maior
-                                else {
-                                    if (confN.priority > confE.priority) {
-                                        overwrite = true;
-                                    }
-                                }
+                                if (!isPeriodN && isPeriodE) overwrite = true;
+                                else if (isPeriodN && !isPeriodE) overwrite = false;
+                                else if (confN.priority > confE.priority) overwrite = true;
 
                                 if (overwrite) relsMap[key] = r;
                             }
@@ -1286,7 +1292,6 @@
                 if (det && !det.error) {
                     reportDetailsCache[reportId] = det;
                     renderDetailsContent(det);
-                    updateDayStripeUI(obraId, det, det.ocorrencias?.length > 0);
                 } else {
                     alert("Erro ao atualizar dados deste dia.");
                 }
