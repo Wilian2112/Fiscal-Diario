@@ -1285,46 +1285,52 @@
             icon.classList.add('sync-spinning');
 
             try {
-                // 1. Atualiza dados globais para detectar exclusões ou novos relatórios
-                await iniciarSincronizacao(true);
+                // Força uma busca limpa da lista de relatórios da obra específica ignorando o cache global temporariamente
+                const anoAtual = new Date().getFullYear();
+                const inicioReq = `${anoAtual}-01-01`;
+                const fimReq = `${anoAtual}-12-31`;
+                const latestRels = await apiCall(`/obras/${obraId}/relatorios?dataInicio=${inicioReq}&dataFim=${fimReq}&limite=1000&cb=${Date.now()}`);
 
-                // 2. Encontra qual relatório agora é o "dono" do dia baseado na regra (Individual > Período)
-                const res = cachedData.find(r => r.obra._id === obraId);
-                if (!res) return;
+                if (Array.isArray(latestRels)) {
+                    const obraIdx = cachedData.findIndex(r => r.obra._id === obraId);
+                    if (obraIdx !== -1) cachedData[obraIdx].relsMes = latestRels;
+                }
 
                 const targetDate = new Date(ano, mes, dia, 12, 0, 0);
                 let winnerReport = null;
 
-                res.relsMes.forEach(r => {
-                    let dIn = parseDateSafely(r.data);
-                    let dOut = r.dataFim ? parseDateSafely(r.dataFim) : dIn;
-                    
-                    if (targetDate >= dIn && targetDate <= dOut) {
-                        if (!winnerReport) {
-                            winnerReport = r;
-                        } else {
-                            const isPeriodN = r.dataFim && r.dataFim !== r.data;
-                            const isPeriodW = winnerReport.dataFim && winnerReport.dataFim !== winnerReport.data;
-                            
-                            // Regra de Ouro: Individual atropela Período
-                            if (!isPeriodN && isPeriodW) winnerReport = r;
-                            else if (getStatusConfig(r.status).priority > getStatusConfig(winnerReport.status).priority) winnerReport = r;
+                const res = cachedData.find(r => r.obra._id === obraId);
+                if (res) {
+                    res.relsMes.forEach(r => {
+                        let dIn = parseDateSafely(r.data);
+                        let dOut = r.dataFim ? parseDateSafely(r.dataFim) : dIn;
+                        if (targetDate >= dIn && targetDate <= dOut) {
+                            if (!winnerReport) {
+                                winnerReport = r;
+                            } else {
+                                const isPeriodN = r.dataFim && r.dataFim !== r.data;
+                                const isPeriodW = winnerReport.dataFim && winnerReport.dataFim !== winnerReport.data;
+                                if (!isPeriodN && isPeriodW) winnerReport = r;
+                                else if (getStatusConfig(r.status).priority > getStatusConfig(winnerReport.status).priority) winnerReport = r;
+                            }
                         }
-                    }
-                });
+                    });
+                }
 
                 if (winnerReport) {
-                    // 3. Busca os detalhes do relatório que ganhou a vaga (seja ele um novo Individual ou o Período remanescente)
-                    let det = await apiCall(`/obras/${obraId}/relatorios/${winnerReport._id}`);
+                    let det = await apiCall(`/obras/${obraId}/relatorios/${winnerReport._id}?cb=${Date.now()}`);
                     if (det && !det.error) {
                         reportDetailsCache[winnerReport._id] = det;
                         renderDetailsContent(det);
-                        // Atualiza as referências de ID na aba lateral
                         document.getElementById('side-obra-link-container').innerHTML = `<a href="${WEB_APP_BASE}${obraId}/relatorios/${winnerReport._id}" target="_blank" class="btn-link-externo"><i class="fas fa-external-link-alt"></i></a>`;
                     }
                 } else {
                     document.getElementById('side-content').innerHTML = `<div class="p-8 text-center text-gray-400 text-xs font-black uppercase">Nenhum relatório cobre esta data agora.</div>`;
                 }
+                
+                // Sincroniza o calendário ao fundo
+                render();
+
             } catch (e) {
                 console.error(e);
             } finally {
