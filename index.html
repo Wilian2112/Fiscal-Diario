@@ -771,7 +771,8 @@
                         if (dIn) {
                             let curr = new Date(dIn);
                             let loopLimit = 0;
-                            while (curr <= dOut && loopLimit < 32) {
+                            // CORREÇÃO: Limite aumentado para 366 dias para cobrir períodos longos
+                            while (curr <= dOut && loopLimit < 366) {
                                 if (curr.getMonth() === mesVisivel && curr.getFullYear() === anoVisivel) {
                                     const diaNum = curr.getDate();
                                     diasPreenchidos.add(diaNum);
@@ -1114,7 +1115,8 @@
             if (!dIn) return;
             let curr = new Date(dIn);
             let limit = 0;
-            while (curr <= dOut && limit < 32) {
+            // CORREÇÃO: Limite aumentado
+            while (curr <= dOut && limit < 366) {
                 const dataIdFormat = `${curr.getDate().toString().padStart(2,'0')}-${(curr.getMonth()+1).toString().padStart(2,'0')}-${curr.getFullYear()}`;
                 const dayEl = document.getElementById(`day-${obraId}-${dataIdFormat}`);
                 if (dayEl) {
@@ -1167,14 +1169,29 @@
                 if (dIn) {
                     let curr = new Date(dIn);
                     let limit = 0;
-                    while (curr <= dOut && limit < 32) {
+                    // CORREÇÃO: Limite aumentado para 366 dias para cobrir períodos longos
+                    while (curr <= dOut && limit < 366) {
                         if (curr.getMonth() === mes && curr.getFullYear() === ano) {
                             const key = `${curr.getFullYear()}-${(curr.getMonth()+1).toString().padStart(2,'0')}-${curr.getDate().toString().padStart(2,'0')}`;
+                            
                             const confN = getStatusConfig(r.status);
-                            const confE = relsMap[key] ? getStatusConfig(relsMap[key].status) : {
-                                priority: 0
-                            };
-                            if (confN.priority >= confE.priority) relsMap[key] = r;
+                            const isPeriodN = r.dataFim && r.dataFim !== r.data;
+                            // Peso para prioridade: Status (x2) + Individualidade (+1 se for relatório de um dia só)
+                            const priorityN = (confN.priority * 2) + (isPeriodN ? 0 : 1);
+
+                            const existing = relsMap[key];
+                            if (!existing) {
+                                relsMap[key] = r;
+                            } else {
+                                const confE = getStatusConfig(existing.status);
+                                const isPeriodE = existing.dataFim && existing.dataFim !== existing.data;
+                                const priorityE = (confE.priority * 2) + (isPeriodE ? 0 : 1);
+
+                                // CORREÇÃO: Prioriza status maior, e em caso de empate, prioriza relatório individual sobre período
+                                if (priorityN >= priorityE) {
+                                    relsMap[key] = r;
+                                }
+                            }
                         }
                         curr.setDate(curr.getDate() + 1);
                         limit++;
