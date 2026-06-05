@@ -1006,7 +1006,7 @@
             }
 
             const anoAtual = new Date().getFullYear();
-            const inicioReq = `${anoAtual}-01-01`;
+            const inicioReq = `${anoAtual - 1}-01-01`;
             const fimReq = `${anoAtual}-12-31`;
 
             const responseObras = await apiCall('/obras');
@@ -1286,7 +1286,7 @@
 
             try {
                 const anoAtual = new Date().getFullYear();
-                const inicioReq = `${anoAtual}-01-01`;
+                const inicioReq = `${anoAtual - 1}-01-01`;
                 const fimReq = `${anoAtual}-12-31`;
                 const latestRels = await apiCall(`/obras/${obraId}/relatorios?dataInicio=${inicioReq}&dataFim=${fimReq}&limite=1000&cb=${Date.now()}`);
 
