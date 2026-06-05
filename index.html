@@ -1285,7 +1285,6 @@
             icon.classList.add('sync-spinning');
 
             try {
-                // Força uma busca limpa da lista de relatórios da obra específica ignorando o cache global temporariamente
                 const anoAtual = new Date().getFullYear();
                 const inicioReq = `${anoAtual}-01-01`;
                 const fimReq = `${anoAtual}-12-31`;
@@ -1296,7 +1295,7 @@
                     if (obraIdx !== -1) cachedData[obraIdx].relsMes = latestRels;
                 }
 
-                const targetDate = new Date(ano, mes, dia, 12, 0, 0);
+                const targetKey = `${ano}-${(mes + 1).toString().padStart(2, '0')}-${dia.toString().padStart(2, '0')}`;
                 let winnerReport = null;
 
                 const res = cachedData.find(r => r.obra._id === obraId);
@@ -1304,15 +1303,29 @@
                     res.relsMes.forEach(r => {
                         let dIn = parseDateSafely(r.data);
                         let dOut = r.dataFim ? parseDateSafely(r.dataFim) : dIn;
-                        if (targetDate >= dIn && targetDate <= dOut) {
-                            if (!winnerReport) {
-                                winnerReport = r;
-                            } else {
-                                const isPeriodN = r.dataFim && r.dataFim !== r.data;
-                                const isPeriodW = winnerReport.dataFim && winnerReport.dataFim !== winnerReport.data;
-                                if (!isPeriodN && isPeriodW) winnerReport = r;
-                                else if (getStatusConfig(r.status).priority > getStatusConfig(winnerReport.status).priority) winnerReport = r;
+                        if (!dIn) return;
+
+                        let curr = new Date(dIn);
+                        let limit = 0;
+                        while (curr <= dOut && limit < 366) {
+                            const currentKey = `${curr.getFullYear()}-${(curr.getMonth() + 1).toString().padStart(2, '0')}-${curr.getDate().toString().padStart(2, '0')}`;
+                            
+                            if (currentKey === targetKey) {
+                                if (!winnerReport) {
+                                    winnerReport = r;
+                                } else {
+                                    const isPeriodN = r.dataFim && r.dataFim !== r.data;
+                                    const isPeriodW = winnerReport.dataFim && winnerReport.dataFim !== winnerReport.data;
+                                    
+                                    if (!isPeriodN && isPeriodW) winnerReport = r;
+                                    else if (isPeriodN === isPeriodW && getStatusConfig(r.status).priority > getStatusConfig(winnerReport.status).priority) {
+                                        winnerReport = r;
+                                    }
+                                }
+                                break; 
                             }
+                            curr.setDate(curr.getDate() + 1);
+                            limit++;
                         }
                     });
                 }
@@ -1325,10 +1338,9 @@
                         document.getElementById('side-obra-link-container').innerHTML = `<a href="${WEB_APP_BASE}${obraId}/relatorios/${winnerReport._id}" target="_blank" class="btn-link-externo"><i class="fas fa-external-link-alt"></i></a>`;
                     }
                 } else {
-                    document.getElementById('side-content').innerHTML = `<div class="p-8 text-center text-gray-400 text-xs font-black uppercase">Nenhum relatório cobre esta data agora.</div>`;
+                    document.getElementById('side-content').innerHTML = `<div class="p-8 text-center text-gray-400 text-xs font-black uppercase">Nenhum relatório encontrado para esta data.</div>`;
                 }
                 
-                // Sincroniza o calendário ao fundo
                 render();
 
             } catch (e) {
