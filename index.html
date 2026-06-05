@@ -332,7 +332,7 @@
         <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md p-10 m-4 text-center relative overflow-hidden">
 
             <div class="inline-flex items-center justify-center mb-8">
-                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRmHLLhhzqVAzvECxD7HCqYHK4Znpr3kQvwYg&s" alt="Logo Pacopedra" class="h-20 w-auto object-contain">
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRmHLLhhzqVAzvECxD7HCqYHK4Znpr3kQvwYg&s" alt="Logo Pacopedra" class="h-12 w-auto object-contain">
             </div>
 
             <h2 class="text-3xl font-black text-gray-900 tracking-tight mb-2">Acesso Restrito</h2>
@@ -771,7 +771,6 @@
                         if (dIn) {
                             let curr = new Date(dIn);
                             let loopLimit = 0;
-                            // CORREÇÃO: Limite aumentado para 366 dias para cobrir períodos longos
                             while (curr <= dOut && loopLimit < 366) {
                                 if (curr.getMonth() === mesVisivel && curr.getFullYear() === anoVisivel) {
                                     const diaNum = curr.getDate();
@@ -1115,7 +1114,6 @@
             if (!dIn) return;
             let curr = new Date(dIn);
             let limit = 0;
-            // CORREÇÃO: Limite aumentado
             while (curr <= dOut && limit < 366) {
                 const dataIdFormat = `${curr.getDate().toString().padStart(2,'0')}-${(curr.getMonth()+1).toString().padStart(2,'0')}-${curr.getFullYear()}`;
                 const dayEl = document.getElementById(`day-${obraId}-${dataIdFormat}`);
@@ -1169,28 +1167,38 @@
                 if (dIn) {
                     let curr = new Date(dIn);
                     let limit = 0;
-                    // CORREÇÃO: Limite aumentado para 366 dias para cobrir períodos longos
                     while (curr <= dOut && limit < 366) {
                         if (curr.getMonth() === mes && curr.getFullYear() === ano) {
                             const key = `${curr.getFullYear()}-${(curr.getMonth()+1).toString().padStart(2,'0')}-${curr.getDate().toString().padStart(2,'0')}`;
                             
-                            const confN = getStatusConfig(r.status);
                             const isPeriodN = r.dataFim && r.dataFim !== r.data;
-                            // Peso para prioridade: Status (x2) + Individualidade (+1 se for relatório de um dia só)
-                            const priorityN = (confN.priority * 2) + (isPeriodN ? 0 : 1);
-
+                            const confN = getStatusConfig(r.status);
+                            
                             const existing = relsMap[key];
                             if (!existing) {
                                 relsMap[key] = r;
                             } else {
-                                const confE = getStatusConfig(existing.status);
                                 const isPeriodE = existing.dataFim && existing.dataFim !== existing.data;
-                                const priorityE = (confE.priority * 2) + (isPeriodE ? 0 : 1);
+                                const confE = getStatusConfig(existing.status);
 
-                                // CORREÇÃO: Prioriza status maior, e em caso de empate, prioriza relatório individual sobre período
-                                if (priorityN >= priorityE) {
-                                    relsMap[key] = r;
+                                let overwrite = false;
+                                
+                                // REGRA: Individual SEMPRE ganha de Período para "contornar" os dias
+                                if (!isPeriodN && isPeriodE) {
+                                    overwrite = true;
+                                } 
+                                // Se o novo é período e o que já está lá é individual, não mexe
+                                else if (isPeriodN && !isPeriodE) {
+                                    overwrite = false;
+                                } 
+                                // Se forem do mesmo tipo (dois individuais ou dois períodos), prevalece o status maior
+                                else {
+                                    if (confN.priority > confE.priority) {
+                                        overwrite = true;
+                                    }
                                 }
+
+                                if (overwrite) relsMap[key] = r;
                             }
                         }
                         curr.setDate(curr.getDate() + 1);
