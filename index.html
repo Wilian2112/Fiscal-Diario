@@ -332,7 +332,7 @@
         <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md p-10 m-4 text-center relative overflow-hidden">
 
             <div class="inline-flex items-center justify-center mb-8">
-                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRmHLLhhzqVAzvECxD7HCqYHK4Znpr3kQvwYg&s" alt="Logo Pacopedra" class="h-12 w-auto object-contain">
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRmHLLhhzqVAzvECxD7HCqYHK4Znpr3kQvwYg&s" alt="Logo Pacopedra" class="h-20 w-auto object-contain">
             </div>
 
             <h2 class="text-3xl font-black text-gray-900 tracking-tight mb-2">Acesso Restrito</h2>
@@ -1081,7 +1081,6 @@
 
             const syncPromises = [];
             for (const res of obrasVisiveis) {
-                // REPLICAR LÓGICA DE PRIORIDADE PARA OCORRÊNCIAS
                 const relsMap = {};
                 res.relsMes.forEach(r => {
                     let dIn = parseDateSafely(r.data);
@@ -1099,7 +1098,7 @@
                             } else {
                                 const isPeriodE = existing.dataFim && existing.dataFim !== existing.data;
                                 if (!isPeriodN && isPeriodE) relsMap[key] = r;
-                                else if (isPeriodN && !isPeriodE) {} // Mantém o individual
+                                else if (isPeriodN && !isPeriodE) {}
                                 else {
                                     if (getStatusConfig(r.status).priority > getStatusConfig(existing.status).priority) relsMap[key] = r;
                                 }
@@ -1109,7 +1108,6 @@
                     }
                 });
 
-                // Agora processamos apenas os relatórios que são "donos" de pelo menos um dia
                 const activeReportIds = [...new Set(Object.values(relsMap).map(r => r._id))];
                 
                 activeReportIds.forEach(rId => {
@@ -1122,7 +1120,6 @@
                         
                         if (det && !det.error) {
                             const hasOccurrences = det.ocorrencias?.length > 0;
-                            // Atualiza APENAS os dias onde este relatório é o vencedor
                             for (const dateKey in relsMap) {
                                 if (relsMap[dateKey]._id === rId) {
                                     const [y, m, d] = dateKey.split('-').map(Number);
@@ -1262,7 +1259,7 @@
             document.getElementById('side-overlay').classList.add('open');
             document.getElementById('side-panel').classList.add('open');
 
-            document.getElementById('side-refresh-btn').onclick = () => refreshSpecificReport(obraId, reportId);
+            document.getElementById('side-refresh-btn').onclick = () => refreshSpecificReport(obraId, dia, mes, ano);
 
             const cache = reportDetailsCache[reportId];
             if (cache && cache.atividades) {
@@ -1282,18 +1279,49 @@
             }
         }
 
-        async function refreshSpecificReport(obraId, reportId) {
+        async function refreshSpecificReport(obraId, dia, mes, ano) {
             const btn = document.getElementById('side-refresh-btn');
             const icon = btn.querySelector('i');
             icon.classList.add('sync-spinning');
 
             try {
-                let det = await apiCall(`/obras/${obraId}/relatorios/${reportId}`);
-                if (det && !det.error) {
-                    reportDetailsCache[reportId] = det;
-                    renderDetailsContent(det);
+                // 1. Atualiza dados globais para detectar exclusões e mudanças de cobertura
+                await iniciarSincronizacao(true);
+
+                // 2. Encontra qual relatório "manda" nesse dia agora (Individual > Período)
+                const res = cachedData.find(r => r.obra._id === obraId);
+                if (!res) return;
+
+                const targetDate = new Date(ano, mes, dia, 12, 0, 0);
+                let currentReport = null;
+
+                res.relsMes.forEach(r => {
+                    let dIn = parseDateSafely(r.data);
+                    let dOut = r.dataFim ? parseDateSafely(r.dataFim) : dIn;
+                    if (targetDate >= dIn && targetDate <= dOut) {
+                        if (!currentReport) {
+                            currentReport = r;
+                        } else {
+                            const isPeriodN = r.dataFim && r.dataFim !== r.data;
+                            const isPeriodE = currentReport.dataFim && currentReport.dataFim !== currentReport.data;
+                            // Individual ganha do Período
+                            if (!isPeriodN && isPeriodE) currentReport = r;
+                            else if (getStatusConfig(r.status).priority > getStatusConfig(currentReport.status).priority) currentReport = r;
+                        }
+                    }
+                });
+
+                if (currentReport) {
+                    // 3. Busca detalhes do relatório que assumiu o dia
+                    let det = await apiCall(`/obras/${obraId}/relatorios/${currentReport._id}`);
+                    if (det && !det.error) {
+                        reportDetailsCache[currentReport._id] = det;
+                        renderDetailsContent(det);
+                        // Atualiza o link externo para o novo ID
+                        document.getElementById('side-obra-link-container').innerHTML = `<a href="${WEB_APP_BASE}${obraId}/relatorios/${currentReport._id}" target="_blank" class="btn-link-externo"><i class="fas fa-external-link-alt"></i></a>`;
+                    }
                 } else {
-                    alert("Erro ao atualizar dados deste dia.");
+                    document.getElementById('side-content').innerHTML = `<div class="p-8 text-center text-gray-400 text-xs font-black uppercase">Relatório não encontrado.</div>`;
                 }
             } catch (e) {
                 console.error(e);
