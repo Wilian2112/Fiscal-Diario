@@ -127,11 +127,12 @@
         #login-overlay {
             backdrop-filter: blur(16px);
             background-color: rgba(6, 78, 59, 0.9);
+            transition: opacity 0.4s ease, visibility 0.4s;
         }
 
         #side-panel {
             transform: translateX(100%);
-            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         #side-panel.open {
@@ -140,13 +141,44 @@
 
         .side-overlay {
             opacity: 0;
-            transition: opacity 0.3s;
+            transition: opacity 0.4s ease;
             pointer-events: none;
         }
 
         .side-overlay.open {
             opacity: 1;
             pointer-events: auto;
+        }
+
+        /* ANIMAÇÕES DINÂMICAS PARA MODAIS */
+        .modal-base {
+            transition: opacity 0.3s ease, visibility 0.3s;
+        }
+        
+        .modal-content-anim {
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+        }
+
+        .modal-hidden-state {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .modal-visible-state {
+            opacity: 1 !important;
+            visibility: visible !important;
+            pointer-events: auto !important;
+        }
+
+        .modal-scale-hide {
+            transform: scale(0.9) translateY(10px);
+            opacity: 0;
+        }
+
+        .modal-scale-show {
+            transform: scale(1) translateY(0);
+            opacity: 1;
         }
 
         .details-section {
@@ -255,13 +287,8 @@
         }
 
         @keyframes spin {
-            from {
-                transform: rotate(0deg);
-            }
-
-            to {
-                transform: rotate(360deg);
-            }
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
 
         @keyframes shake {
@@ -274,18 +301,8 @@
             animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
         }
 
-        .modal-base {
-            backdrop-filter: blur(8px);
-            background-color: rgba(2, 44, 34, 0.7);
-        }
-
-        .btn-copy {
-            background-color: #15803d;
-        }
-
-        .btn-download {
-            background-color: #475569;
-        }
+        .btn-copy { background-color: #15803d; }
+        .btn-download { background-color: #475569; }
 
         .custom-checkbox {
             width: 20px;
@@ -328,16 +345,15 @@
 <body class="text-gray-800 antialiased min-h-screen flex flex-col">
 
     <!-- LOGIN POP-UP -->
-    <div id="login-overlay" class="fixed inset-0 z-[200] flex items-center justify-center overflow-hidden">
-        <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md p-10 m-4 text-center relative overflow-hidden">
+    <div id="login-overlay" class="fixed inset-0 z-[200] flex items-center justify-center overflow-hidden modal-hidden-state">
+        <div id="login-content" class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md p-10 m-4 text-center relative overflow-hidden modal-content-anim modal-scale-hide">
 
             <div class="inline-flex items-center justify-center mb-8">
                 <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRmHLLhhzqVAzvECxD7HCqYHK4Znpr3kQvwYg&s" alt="Logo Pacopedra" class="h-20 w-auto object-contain">
             </div>
 
             <h2 class="text-3xl font-black text-gray-900 tracking-tight mb-2">Acesso Restrito</h2>
-            <p class="text-gray-500 mb-8 font-medium"></p>
-
+            
             <div id="login-error" class="hidden mb-6 bg-red-50 border border-red-100 text-red-600 p-4 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2">
                 <i class="fas fa-exclamation-triangle"></i> <span id="error-text">Por favor, insira o token</span>
             </div>
@@ -349,8 +365,8 @@
     </div>
 
     <!-- MODAL SELEÇÃO DE OBRAS -->
-    <div id="modal-selecao-obras" class="fixed inset-0 z-[160] hidden modal-base flex items-center justify-center p-4">
-        <div class="bg-white rounded-[1.5rem] shadow-2xl w-full max-w-lg flex flex-col overflow-hidden">
+    <div id="modal-selecao-obras" class="fixed inset-0 z-[160] modal-base flex items-center justify-center p-4 modal-hidden-state bg-slate-900/40 backdrop-blur-sm">
+        <div id="modal-selecao-content" class="bg-white rounded-[1.5rem] shadow-2xl w-full max-w-lg flex flex-col overflow-hidden modal-content-anim modal-scale-hide">
             <div class="p-6 flex justify-between items-center">
                 <h2 class="text-2xl font-bold text-slate-700 flex items-center gap-3">
                     <i class="fas fa-list-check text-green-700"></i> Seleção
@@ -365,7 +381,7 @@
                     <input type="text" id="search-obras-modal" oninput="filtrarObrasNoModal()" placeholder="Pesquisar obra..." class="w-full bg-gray-50 border border-gray-200 rounded-lg py-3 pl-11 pr-4 text-sm outline-none focus:ring-2 focus:ring-green-500/20 transition-all">
                 </div>
                 <div class="flex justify-between text-[11px] font-bold text-gray-400 uppercase px-1">
-                    <span>Ocultar ou mostrar do painel</span>
+                    <span>Painel Personalizado</span>
                     <div class="flex gap-4">
                         <button onclick="marcarTodasNoModal(true)" class="text-green-700 hover:underline">Marcar todas</button>
                         <button onclick="marcarTodasNoModal(false)" class="text-green-700 hover:underline">Desmarcar todas</button>
@@ -382,8 +398,8 @@
     </div>
 
     <!-- MODAL LISTA DE PENDÊNCIAS -->
-    <div id="modal-pendencias" class="fixed inset-0 z-[150] hidden modal-base flex items-center justify-center p-4">
-        <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-300">
+    <div id="modal-pendencias" class="fixed inset-0 z-[150] modal-base flex items-center justify-center p-4 modal-hidden-state bg-slate-900/40 backdrop-blur-sm">
+        <div id="modal-pendencias-content" class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl flex flex-col overflow-hidden modal-content-anim modal-scale-hide">
             <div class="p-6 border-b flex justify-between items-center bg-gray-50">
                 <h2 class="text-xl font-black uppercase tracking-tighter">Pendências de Relatórios</h2>
                 <div class="flex items-center gap-4">
@@ -524,16 +540,36 @@
         let selectedStatus = 'todos';
         let globalSearchTerm = "";
 
-        function lockScroll() {
-            document.body.style.overflow = 'hidden';
-        }
-
-        function unlockScroll() {
-            document.body.style.overflow = '';
-        }
+        function lockScroll() { document.body.style.overflow = 'hidden'; }
+        function unlockScroll() { document.body.style.overflow = ''; }
 
         function normalizeString(str) {
             return str ? str.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ' ').trim() : "";
+        }
+
+        // FUNÇÕES GENÉRICAS PARA ANIMAÇÃO DE MODAL
+        function abrirModalAnim(overlayId, contentId) {
+            lockScroll();
+            const overlay = document.getElementById(overlayId);
+            const content = document.getElementById(contentId);
+            overlay.classList.add('modal-visible-state');
+            overlay.classList.remove('modal-hidden-state');
+            setTimeout(() => {
+                content.classList.add('modal-scale-show');
+                content.classList.remove('modal-scale-hide');
+            }, 10);
+        }
+
+        function fecharModalAnim(overlayId, contentId) {
+            const overlay = document.getElementById(overlayId);
+            const content = document.getElementById(contentId);
+            content.classList.add('modal-scale-hide');
+            content.classList.remove('modal-scale-show');
+            setTimeout(() => {
+                overlay.classList.add('modal-hidden-state');
+                overlay.classList.remove('modal-visible-state');
+                unlockScroll();
+            }, 300);
         }
 
         function syncSelectionWithFilters() {
@@ -560,14 +596,12 @@
         }
 
         function abrirModalSelecao() {
-            lockScroll();
-            document.getElementById('modal-selecao-obras').classList.remove('hidden');
+            abrirModalAnim('modal-selecao-obras', 'modal-selecao-content');
             renderListaSelecao();
         }
 
         function fecharModalSelecao() {
-            unlockScroll();
-            document.getElementById('modal-selecao-obras').classList.add('hidden');
+            fecharModalAnim('modal-selecao-obras', 'modal-selecao-content');
         }
 
         function renderListaSelecao() {
@@ -695,8 +729,7 @@
         }
 
         async function abrirModalPendencias() {
-            lockScroll();
-            document.getElementById('modal-pendencias').classList.remove('hidden');
+            abrirModalAnim('modal-pendencias', 'modal-pendencias-content');
             atualizarListaPendencias(false);
         }
 
@@ -802,9 +835,7 @@
                     }
                 });
 
-                const mesNome = globalViewDate.toLocaleString('pt-br', {
-                    month: 'long'
-                });
+                const mesNome = globalViewDate.toLocaleString('pt-br', { month: 'long' });
                 let texto = "";
 
                 const chavesEngenheiros = Object.keys(agrupadoEngenheiro).sort((a, b) => {
@@ -823,7 +854,6 @@
                     texto += `\n`;
                 });
                 container.innerText = texto || "✅ Nenhuma pendência encontrada!";
-                
                 if (isRefresh) mostrarAviso("DADOS ATUALIZADOS!");
 
             } catch (e) {
@@ -837,40 +867,30 @@
         function mostrarAviso(mensagem) {
             const toast = document.getElementById('toast-sucesso');
             const toastText = document.getElementById('toast-text');
-
             toastText.innerText = mensagem;
             toast.classList.remove('hidden');
-
-            setTimeout(() => {
-                toast.classList.add('hidden');
-            }, 3000);
+            setTimeout(() => { toast.classList.add('hidden'); }, 3000);
         }
 
         function copiarTextoWhatsApp() {
             const texto = document.getElementById('container-texto-whatsapp').innerText;
-            navigator.clipboard.writeText(texto).then(() => {
-                mostrarAviso("TEXTO COPIADO COM SUCESSO!");
-            });
+            navigator.clipboard.writeText(texto).then(() => { mostrarAviso("TEXTO COPIADO COM SUCESSO!"); });
         }
 
         function downloadTextoPendencias() {
             const texto = document.getElementById('container-texto-whatsapp').innerText;
-            const blob = new Blob([texto], {
-                type: 'text/plain'
-            });
+            const blob = new Blob([texto], { type: 'text/plain' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            const hoje = new Date();
-            a.download = `DIA ${hoje.getDate()}.txt`;
+            a.download = `PENDENCIAS_DIA_${new Date().getDate()}.txt`;
             a.click();
             window.URL.revokeObjectURL(url);
             mostrarAviso("DOWNLOAD CONCLUÍDO!");
         }
 
         function fecharModalPendencias() {
-            unlockScroll();
-            document.getElementById('modal-pendencias').classList.add('hidden');
+            fecharModalAnim('modal-pendencias', 'modal-pendencias-content');
         }
 
         function toggleStatusDropdown() {
@@ -894,10 +914,7 @@
                 input.focus();
             };
 
-            if (!token) {
-                dispararErro("Por favor, insira o token");
-                return;
-            }
+            if (!token) { dispararErro("Por favor, insira o token"); return; }
 
             const originalText = btn.innerText;
             btn.innerText = "CARREGANDO...";
@@ -905,22 +922,17 @@
 
             try {
                 const response = await fetch(`${API_ENDPOINT}/empresa`, {
-                    headers: {
-                        'token': token,
-                        'Content-Type': 'application/json'
-                    }
+                    headers: { 'token': token, 'Content-Type': 'application/json' }
                 });
                 const data = await response.json();
 
-                if (response.status !== 200 || !data._id) {
-                    throw new Error("Invalido");
-                }
+                if (response.status !== 200 || !data._id) throw new Error("Invalido");
 
                 errorMsg.classList.add('hidden');
                 input.classList.remove('border-red-500', 'bg-red-50');
                 sessionStorage.setItem('diario_token', token);
-                document.getElementById('login-overlay').style.display = 'none';
-                unlockScroll();
+                
+                fecharModalAnim('login-overlay', 'login-content');
                 iniciarSincronizacao();
 
             } catch (e) {
@@ -932,81 +944,45 @@
             }
         }
 
-        function sair() {
-            sessionStorage.removeItem('diario_token');
-            location.reload();
-        }
+        function sair() { sessionStorage.removeItem('diario_token'); location.reload(); }
 
         async function apiCall(path) {
             const token = sessionStorage.getItem('diario_token');
             try {
                 const response = await fetch(`${API_ENDPOINT}${path}`, {
-                    headers: {
-                        'token': token,
-                        'Content-Type': 'application/json'
-                    }
+                    headers: { 'token': token, 'Content-Type': 'application/json' }
                 });
                 return await response.json();
-            } catch (e) {
-                return {
-                    error: true
-                };
-            }
+            } catch (e) { return { error: true }; }
         }
 
         function getStatusConfig(statusObj) {
             const id = parseInt(statusObj?.id);
             const desc = (statusObj?.descricao || "").toLowerCase();
-            if (id === 3 || desc.includes("revisar")) return {
-                label: 'Revisar',
-                css: 'status-revisar',
-                text: 'text-red-600',
-                priority: 3
-            };
-            if (id === 1 || desc.includes("preenchendo")) return {
-                label: 'Pendente',
-                css: 'status-pendente',
-                text: 'text-amber-600',
-                priority: 2
-            };
-            if (id === 2 || desc.includes("aprovado")) return {
-                label: 'Aprovado',
-                css: 'status-aprovado',
-                text: 'text-emerald-700',
-                priority: 1
-            };
-            return {
-                label: '',
-                css: 'status-vazio',
-                text: 'text-gray-300',
-                priority: 0
-            };
+            if (id === 3 || desc.includes("revisar")) return { label: 'Revisar', css: 'status-revisar', text: 'text-red-600', priority: 3 };
+            if (id === 1 || desc.includes("preenchendo")) return { label: 'Pendente', css: 'status-pendente', text: 'text-amber-600', priority: 2 };
+            if (id === 2 || desc.includes("aprovado")) return { label: 'Aprovado', css: 'status-aprovado', text: 'text-emerald-700', priority: 1 };
+            return { label: '', css: 'status-vazio', text: 'text-gray-300', priority: 0 };
         }
 
         function parseDateSafely(dateStr) {
             if (!dateStr) return null;
             let y, m, d;
-            if (dateStr.includes('T')) {
-                [y, m, d] = dateStr.split('T')[0].split('-').map(Number);
-            } else if (dateStr.includes('/')) {
-                [d, m, y] = dateStr.split('/').map(Number);
-            } else {
-                [y, m, d] = dateStr.split('-').map(Number);
-            }
+            if (dateStr.includes('T')) { [y, m, d] = dateStr.split('T')[0].split('-').map(Number); } 
+            else if (dateStr.includes('/')) { [d, m, y] = dateStr.split('/').map(Number); } 
+            else { [y, m, d] = dateStr.split('-').map(Number); }
             return new Date(y, m - 1, d, 12, 0, 0);
         }
 
         async function iniciarSincronizacao(isSilent = false) {
             const syncIcon = document.getElementById('sync-icon-manual');
-            if (isSilent) {
-                if(syncIcon) syncIcon.classList.add('sync-spinning');
-            } else {
+            if (isSilent) { if(syncIcon) syncIcon.classList.add('sync-spinning'); } 
+            else {
                 document.getElementById('loader').style.display = 'block';
                 document.getElementById('global-month-label').innerText = 'CARREGANDO...';
             }
 
             const anoAtual = new Date().getFullYear();
-            // Mudança solicitada: buscar todos os relatórios desde 2010
             const inicioReq = "2010-01-01";
             const fimReq = `${anoAtual}-12-31`;
 
@@ -1024,10 +1000,7 @@
 
             const results = await Promise.all(todasObras.map(async (obra) => {
                 const relsList = await apiCall(`/obras/${obra._id}/relatorios?dataInicio=${inicioReq}&dataFim=${fimReq}&limite=1000`);
-                return {
-                    obra,
-                    relsMes: Array.isArray(relsList) ? relsList : []
-                };
+                return { obra, relsMes: Array.isArray(relsList) ? relsList : [] };
             }));
 
             cachedData = results;
@@ -1035,36 +1008,24 @@
             const tag = document.getElementById('last-update-tag');
             if(tag) tag.innerText = `Atualizado às ${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`;
             
-            if (isSilent) {
-                if(syncIcon) syncIcon.classList.remove('sync-spinning');
-            } else {
-                document.getElementById('loader').style.display = 'none';
-            }
+            if (isSilent) { if(syncIcon) syncIcon.classList.remove('sync-spinning'); } 
+            else { document.getElementById('loader').style.display = 'none'; }
             render();
             startTimer();
         }
 
         function updateGlobalLabel() {
-            const mesNome = globalViewDate.toLocaleString('pt-br', {
-                month: 'long'
-            });
+            const mesNome = globalViewDate.toLocaleString('pt-br', { month: 'long' });
             const ano = globalViewDate.getFullYear();
             document.getElementById('global-month-label').innerText = `${mesNome} ${ano}`;
-
-            const nowMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-            const viewMonth = new Date(globalViewDate.getFullYear(), globalViewDate.getMonth(), 1);
-
-            const isAtLimit = (viewMonth >= nowMonth);
+            const isAtLimit = (new Date(globalViewDate.getFullYear(), globalViewDate.getMonth(), 1) >= new Date(now.getFullYear(), now.getMonth(), 1));
             document.getElementById('global-next-btn').disabled = isAtLimit;
         }
 
         function changeGlobalMonth(offset) {
             const newDate = new Date(globalViewDate);
             newDate.setMonth(newDate.getMonth() + offset);
-
-            const todayLimit = new Date(now.getFullYear(), now.getMonth(), 1, 23, 59, 59);
-            if (offset > 0 && newDate > todayLimit) return;
-
+            if (offset > 0 && newDate > new Date(now.getFullYear(), now.getMonth(), 1, 23, 59, 59)) return;
             globalViewDate = newDate;
             updateGlobalLabel();
             render();
@@ -1073,12 +1034,7 @@
         async function triggerBackgroundOccurrenceCheck() {
             const mesVisivel = globalViewDate.getMonth();
             const anoVisivel = globalViewDate.getFullYear();
-            
-            const obrasVisiveis = cachedData.filter(res => {
-                const isSelected = selectedObraIds.has(res.obra._id);
-                const matchSearch = res.obra.nome.toLowerCase().includes(globalSearchTerm);
-                return isSelected && matchSearch;
-            });
+            const obrasVisiveis = cachedData.filter(res => selectedObraIds.has(res.obra._id) && res.obra.nome.toLowerCase().includes(globalSearchTerm));
 
             const syncPromises = [];
             for (const res of obrasVisiveis) {
@@ -1088,76 +1044,45 @@
                     let dOut = r.dataFim ? parseDateSafely(r.dataFim) : dIn;
                     if (!dIn) return;
                     let curr = new Date(dIn);
-                    let loopLimit = 0;
-                    while (curr <= dOut && loopLimit < 366) {
+                    while (curr <= dOut) {
                         if (curr.getMonth() === mesVisivel && curr.getFullYear() === anoVisivel) {
                             const key = `${curr.getFullYear()}-${(curr.getMonth()+1).toString().padStart(2,'0')}-${curr.getDate().toString().padStart(2,'0')}`;
-                            const isPeriodN = r.dataFim && r.dataFim !== r.data;
-                            const existing = relsMap[key];
-                            if (!existing) {
-                                relsMap[key] = r;
-                            } else {
-                                const isPeriodE = existing.dataFim && existing.dataFim !== existing.data;
-                                if (!isPeriodN && isPeriodE) relsMap[key] = r;
-                                else if (isPeriodN && !isPeriodE) {}
-                                else {
-                                    if (getStatusConfig(r.status).priority > getStatusConfig(existing.status).priority) relsMap[key] = r;
-                                }
-                            }
+                            if (!relsMap[key] || getStatusConfig(r.status).priority > getStatusConfig(relsMap[key].status).priority) relsMap[key] = r;
                         }
-                        curr.setDate(curr.getDate() + 1); loopLimit++;
+                        curr.setDate(curr.getDate() + 1);
                     }
                 });
 
                 const activeReportIds = [...new Set(Object.values(relsMap).map(r => r._id))];
-                
                 activeReportIds.forEach(rId => {
-                    const fetchTask = async () => {
-                        let det = reportDetailsCache[rId];
-                        if (!det) {
-                            det = await apiCall(`/obras/${res.obra._id}/relatorios/${rId}`);
-                            if (det && !det.error) reportDetailsCache[rId] = det;
-                        }
-                        
+                    syncPromises.push((async () => {
+                        let det = reportDetailsCache[rId] || await apiCall(`/obras/${res.obra._id}/relatorios/${rId}`);
                         if (det && !det.error) {
+                            reportDetailsCache[rId] = det;
                             const hasOccurrences = det.ocorrencias?.length > 0;
                             for (const dateKey in relsMap) {
                                 if (relsMap[dateKey]._id === rId) {
                                     const [y, m, d] = dateKey.split('-').map(Number);
-                                    const dataIdFormat = `${d.toString().padStart(2,'0')}-${m.toString().padStart(2,'0')}-${y}`;
-                                    const dayEl = document.getElementById(`day-${res.obra._id}-${dataIdFormat}`);
+                                    const dayEl = document.getElementById(`day-${res.obra._id}-${d.toString().padStart(2,'0')}-${m.toString().padStart(2,'0')}-${y}`);
                                     if (dayEl) {
                                         const stripe = dayEl.querySelector('.stripe-alert');
                                         if (hasOccurrences && !stripe) {
-                                            const s = document.createElement('div');
-                                            s.className = 'stripe-alert';
-                                            dayEl.appendChild(s);
-                                        } else if (!hasOccurrences && stripe) {
-                                            stripe.remove();
-                                        }
+                                            const s = document.createElement('div'); s.className = 'stripe-alert'; dayEl.appendChild(s);
+                                        } else if (!hasOccurrences && stripe) stripe.remove();
                                     }
                                 }
                             }
                         }
-                    };
-                    syncPromises.push(fetchTask());
+                    })());
                 });
             }
-            for (let i = 0; i < syncPromises.length; i += 10) {
-                await Promise.all(syncPromises.slice(i, i + 10));
-            }
+            for (let i = 0; i < syncPromises.length; i += 10) await Promise.all(syncPromises.slice(i, i + 10));
         }
 
         function render() {
             const container = document.getElementById('dashboard');
             container.innerHTML = '';
-
-            const filtered = cachedData.filter(res => {
-                const isSelected = selectedObraIds.has(res.obra._id);
-                const matchSearch = res.obra.nome.toLowerCase().includes(globalSearchTerm);
-                return isSelected && matchSearch;
-            });
-
+            const filtered = cachedData.filter(res => selectedObraIds.has(res.obra._id) && res.obra.nome.toLowerCase().includes(globalSearchTerm));
             const statusLabel = document.getElementById('current-status-label');
             if(statusLabel) statusLabel.innerText = `${selectedStatus === 'todos' ? 'Status: Todos' : selectedStatus} (${filtered.length})`;
 
@@ -1182,72 +1107,32 @@
                 let dOut = r.dataFim ? parseDateSafely(r.dataFim) : dIn;
                 if (dIn) {
                     let curr = new Date(dIn);
-                    let limit = 0;
-                    while (curr <= dOut && limit < 366) {
+                    while (curr <= dOut) {
                         if (curr.getMonth() === mes && curr.getFullYear() === ano) {
                             const key = `${curr.getFullYear()}-${(curr.getMonth()+1).toString().padStart(2,'0')}-${curr.getDate().toString().padStart(2,'0')}`;
-                            
-                            const isPeriodN = r.dataFim && r.dataFim !== r.data;
-                            const confN = getStatusConfig(r.status);
-                            
-                            const existing = relsMap[key];
-                            if (!existing) {
-                                relsMap[key] = r;
-                            } else {
-                                const isPeriodE = existing.dataFim && existing.dataFim !== existing.data;
-                                const confE = getStatusConfig(existing.status);
-
-                                let overwrite = false;
-                                if (!isPeriodN && isPeriodE) overwrite = true;
-                                else if (isPeriodN && !isPeriodE) overwrite = false;
-                                else if (confN.priority > confE.priority) overwrite = true;
-
-                                if (overwrite) relsMap[key] = r;
-                            }
+                            if (!relsMap[key] || getStatusConfig(r.status).priority > getStatusConfig(relsMap[key].status).priority) relsMap[key] = r;
                         }
                         curr.setDate(curr.getDate() + 1);
-                        limit++;
                     }
                 }
             });
 
-            let html = `
-            <div class="bg-white p-7 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col h-full">
-                <div class="flex items-center justify-between mb-8">
-                    <h3 title="${res.obra.nome}" class="font-black text-sm text-gray-800 truncate uppercase tracking-tighter w-4/5 cursor-help">${res.obra.nome}</h3>
-                    <a href="${WEB_APP_BASE}${res.obra._id}/relatorios" target="_blank" class="btn-link-externo"><i class="fas fa-external-link-alt"></i></a>
-                </div>
-                <div class="calendar-grid mb-6">
-                    <div class="calendar-header-day">D</div><div class="calendar-header-day">S</div><div class="calendar-header-day">T</div><div class="calendar-header-day">Q</div><div class="calendar-header-day">Q</div><div class="calendar-header-day">S</div><div class="calendar-header-day">S</div>`;
+            let html = `<div class="bg-white p-7 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col h-full"><div class="flex items-center justify-between mb-8"><h3 title="${res.obra.nome}" class="font-black text-sm text-gray-800 truncate uppercase tracking-tighter w-4/5 cursor-help">${res.obra.nome}</h3><a href="${WEB_APP_BASE}${res.obra._id}/relatorios" target="_blank" class="btn-link-externo"><i class="fas fa-external-link-alt"></i></a></div><div class="calendar-grid mb-6"><div class="calendar-header-day">D</div><div class="calendar-header-day">S</div><div class="calendar-header-day">T</div><div class="calendar-header-day">Q</div><div class="calendar-header-day">Q</div><div class="calendar-header-day">S</div><div class="calendar-header-day">S</div>`;
             for (let i = 0; i < primDiaSemana; i++) html += `<div></div>`;
             const todayStr = `${realToday.getFullYear()}-${(realToday.getMonth()+1).toString().padStart(2,'0')}-${realToday.getDate().toString().padStart(2,'0')}`;
             for (let d = 1; d <= diasNoMes; d++) {
                 const dateKey = `${ano}-${(mes+1).toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}`;
                 const r = relsMap[dateKey];
                 const conf = getStatusConfig(r?.status);
-                const isToday = (dateKey === todayStr);
                 const dataIdFormat = `${d.toString().padStart(2, '0')}-${(mes+1).toString().padStart(2, '0')}-${ano}`;
-
                 let weekendClass = "";
                 if (conf.css === "status-vazio") {
                     const dSemana = new Date(ano, mes, d).getDay();
-                    if (dSemana === 6) weekendClass = "day-sabado";
-                    else if (dSemana === 0) weekendClass = "day-domingo";
+                    if (dSemana === 6) weekendClass = "day-sabado"; else if (dSemana === 0) weekendClass = "day-domingo";
                 }
-
-                html += `<div id="day-${res.obra._id}-${dataIdFormat}" onclick="if('${r?._id || ''}') openDetails('${res.obra._id}', '${res.obra.nome.replace(/'/g, "\\'")}', ${d}, ${mes}, ${ano}, '${r?._id || ''}')" class="calendar-day ${conf.css} ${weekendClass} ${isToday ? 'day-today' : ''}">${d}</div>`;
+                html += `<div id="day-${res.obra._id}-${dataIdFormat}" onclick="if('${r?._id || ''}') openDetails('${res.obra._id}', '${res.obra.nome.replace(/'/g, "\\'")}', ${d}, ${mes}, ${ano}, '${r?._id || ''}')" class="calendar-day ${conf.css} ${weekendClass} ${dateKey === todayStr ? 'day-today' : ''}">${d}</div>`;
             }
-            html += `</div>
-                <div class="mt-auto flex flex-wrap justify-center gap-x-6 gap-y-3 opacity-70">
-                    <div class="flex items-center gap-1.5 shrink-0"><div class="w-2.5 h-2.5 rounded-sm bg-[#15803d]"></div><span class="text-[8px] font-black uppercase text-gray-500 whitespace-nowrap">Aprovado</span></div>
-                    <div class="flex items-center gap-1.5 shrink-0"><div class="w-2.5 h-2.5 rounded-sm bg-[#ef4444]"></div><span class="text-[8px] font-black uppercase text-gray-500 whitespace-nowrap">Revisar</span></div>
-                    <div class="flex items-center gap-1.5 shrink-0"><div class="w-2.5 h-2.5 rounded-sm bg-[#fbbf24]"></div><span class="text-[8px] font-black uppercase text-gray-500 whitespace-nowrap">Pendente</span></div>
-                    <div class="flex items-center gap-1.5 shrink-0">
-                        <div class="w-4 h-2.5 rounded-sm" style="background: repeating-linear-gradient(-45deg, #fbbf24, #fbbf24 4px, #000 4px, #000 8px);"></div>
-                        <span class="text-[8px] font-black uppercase text-gray-500 whitespace-nowrap">Ocorrência</span>
-                    </div>
-                </div>
-            </div>`;
+            html += `</div><div class="mt-auto flex flex-wrap justify-center gap-x-6 gap-y-3 opacity-70"><div class="flex items-center gap-1.5 shrink-0"><div class="w-2.5 h-2.5 rounded-sm bg-[#15803d]"></div><span class="text-[8px] font-black uppercase text-gray-500 whitespace-nowrap">Aprovado</span></div><div class="flex items-center gap-1.5 shrink-0"><div class="w-2.5 h-2.5 rounded-sm bg-[#ef4444]"></div><span class="text-[8px] font-black uppercase text-gray-500 whitespace-nowrap">Revisar</span></div><div class="flex items-center gap-1.5 shrink-0"><div class="w-2.5 h-2.5 rounded-sm bg-[#fbbf24]"></div><span class="text-[8px] font-black uppercase text-gray-500 whitespace-nowrap">Pendente</span></div><div class="flex items-center gap-1.5 shrink-0"><div class="w-4 h-2.5 rounded-sm" style="background: repeating-linear-gradient(-45deg, #fbbf24, #fbbf24 4px, #000 4px, #000 8px);"></div><span class="text-[8px] font-black uppercase text-gray-500 whitespace-nowrap">Ocorrência</span></div></div></div>`;
             return html;
         }
 
@@ -1259,97 +1144,52 @@
             document.getElementById('side-data').innerText = displayDate;
             document.getElementById('side-overlay').classList.add('open');
             document.getElementById('side-panel').classList.add('open');
-
             document.getElementById('side-refresh-btn').onclick = () => refreshSpecificReport(obraId, dia, mes, ano);
 
             const cache = reportDetailsCache[reportId];
-            if (cache && cache.atividades) {
-                renderDetailsContent(cache);
-            } else {
-                document.getElementById('side-content').innerHTML = `<div class="flex flex-col items-center justify-center py-20"><div class="w-8 h-8 border-4 border-green-700 border-t-transparent rounded-full animate-spin mb-4"></div><span class="text-[9px] font-black uppercase">Carregando dados técnicos...</span></div>`;
-            }
-
+            if (cache && cache.atividades) { renderDetailsContent(cache); } 
+            else { document.getElementById('side-content').innerHTML = `<div class="flex flex-col items-center justify-center py-20"><div class="w-8 h-8 border-4 border-green-700 border-t-transparent rounded-full animate-spin mb-4"></div><span class="text-[9px] font-black uppercase">Carregando dados técnicos...</span></div>`; }
             try {
                 let det = await apiCall(`/obras/${obraId}/relatorios/${reportId}`);
-                if (det && !det.error) {
-                    reportDetailsCache[reportId] = det;
-                    renderDetailsContent(det);
-                }
-            } catch (e) {
-                console.error("Erro ao carregar detalhes", e);
-            }
+                if (det && !det.error) { reportDetailsCache[reportId] = det; renderDetailsContent(det); }
+            } catch (e) { console.error("Erro ao carregar detalhes", e); }
         }
 
         async function refreshSpecificReport(obraId, dia, mes, ano) {
             const btn = document.getElementById('side-refresh-btn');
             const icon = btn.querySelector('i');
             icon.classList.add('sync-spinning');
-
             try {
-                const anoAtual = new Date().getFullYear();
-                // Mudança solicitada: buscar todos os relatórios desde 2010
-                const inicioReq = "2010-01-01";
-                const fimReq = `${anoAtual}-12-31`;
-                const latestRels = await apiCall(`/obras/${obraId}/relatorios?dataInicio=${inicioReq}&dataFim=${fimReq}&limite=1000&cb=${Date.now()}`);
-
+                const latestRels = await apiCall(`/obras/${obraId}/relatorios?dataInicio=2010-01-01&dataFim=${new Date().getFullYear()}-12-31&limite=1000&cb=${Date.now()}`);
                 if (Array.isArray(latestRels)) {
-                    const obraIdx = cachedData.findIndex(r => r.obra._id === obraId);
-                    if (obraIdx !== -1) cachedData[obraIdx].relsMes = latestRels;
+                    const idx = cachedData.findIndex(r => r.obra._id === obraId);
+                    if (idx !== -1) cachedData[idx].relsMes = latestRels;
                 }
-
                 const targetKey = `${ano}-${(mes + 1).toString().padStart(2, '0')}-${dia.toString().padStart(2, '0')}`;
-                let winnerReport = null;
-
+                let winner = null;
                 const res = cachedData.find(r => r.obra._id === obraId);
                 if (res) {
                     res.relsMes.forEach(r => {
-                        let dIn = parseDateSafely(r.data);
-                        let dOut = r.dataFim ? parseDateSafely(r.dataFim) : dIn;
-                        if (!dIn) return;
-
+                        let dIn = parseDateSafely(r.data), dOut = r.dataFim ? parseDateSafely(r.dataFim) : dIn;
                         let curr = new Date(dIn);
-                        let limit = 0;
-                        while (curr <= dOut && limit < 366) {
-                            const currentKey = `${curr.getFullYear()}-${(curr.getMonth() + 1).toString().padStart(2, '0')}-${curr.getDate().toString().padStart(2, '0')}`;
-                            
-                            if (currentKey === targetKey) {
-                                if (!winnerReport) {
-                                    winnerReport = r;
-                                } else {
-                                    const isPeriodN = r.dataFim && r.dataFim !== r.data;
-                                    const isPeriodW = winnerReport.dataFim && winnerReport.dataFim !== winnerReport.data;
-                                    
-                                    if (!isPeriodN && isPeriodW) winnerReport = r;
-                                    else if (isPeriodN === isPeriodW && getStatusConfig(r.status).priority > getStatusConfig(winnerReport.status).priority) {
-                                        winnerReport = r;
-                                    }
-                                }
-                                break; 
+                        while(curr <= dOut) {
+                            if (`${curr.getFullYear()}-${(curr.getMonth()+1).toString().padStart(2,'0')}-${curr.getDate().toString().padStart(2,'0')}` === targetKey) {
+                                if (!winner || getStatusConfig(r.status).priority > getStatusConfig(winner.status).priority) winner = r;
+                                break;
                             }
                             curr.setDate(curr.getDate() + 1);
-                            limit++;
                         }
                     });
                 }
-
-                if (winnerReport) {
-                    let det = await apiCall(`/obras/${obraId}/relatorios/${winnerReport._id}?cb=${Date.now()}`);
+                if (winner) {
+                    let det = await apiCall(`/obras/${obraId}/relatorios/${winner._id}?cb=${Date.now()}`);
                     if (det && !det.error) {
-                        reportDetailsCache[winnerReport._id] = det;
-                        renderDetailsContent(det);
-                        document.getElementById('side-obra-link-container').innerHTML = `<a href="${WEB_APP_BASE}${obraId}/relatorios/${winnerReport._id}" target="_blank" class="btn-link-externo"><i class="fas fa-external-link-alt"></i></a>`;
+                        reportDetailsCache[winner._id] = det; renderDetailsContent(det);
+                        document.getElementById('side-obra-link-container').innerHTML = `<a href="${WEB_APP_BASE}${obraId}/relatorios/${winner._id}" target="_blank" class="btn-link-externo"><i class="fas fa-external-link-alt"></i></a>`;
                     }
-                } else {
-                    document.getElementById('side-content').innerHTML = `<div class="p-8 text-center text-gray-400 text-xs font-black uppercase">Nenhum relatório encontrado para esta data.</div>`;
                 }
-                
                 render();
-
-            } catch (e) {
-                console.error(e);
-            } finally {
-                icon.classList.remove('sync-spinning');
-            }
+            } catch (e) { console.error(e); } finally { icon.classList.remove('sync-spinning'); }
         }
 
         function renderDetailsContent(det) {
@@ -1364,46 +1204,35 @@
             html += section('fas fa-camera', 'Galeria de Fotos', det.galeriaDeFotos?.length || 0, `<div class="grid grid-cols-2 gap-2">${det.galeriaDeFotos?.map(f => `<img src="${f.urlMiniatura || f.url}" class="w-full aspect-square object-cover rounded-xl" loading="lazy">`).join('')}</div>` || 'Nenhuma foto.');
             if (det.ocorrencias?.length > 0) {
                 html += `<div class="mt-6 text-[9px] font-black text-red-500 uppercase tracking-widest mb-3">Ocorrências</div>`;
-                det.ocorrencias.forEach(o => {
-                    html += `<div class="p-4 bg-red-50 border border-red-100 rounded-2xl mb-2 text-xs font-bold text-red-700">${o.descricao}</div>`;
-                });
+                det.ocorrencias.forEach(o => { html += `<div class="p-4 bg-red-50 border border-red-100 rounded-2xl mb-2 text-xs font-bold text-red-700">${o.descricao}</div>`; });
             }
             document.getElementById('side-content').innerHTML = html;
         }
 
-        function closeDetails() {
-            unlockScroll();
-            document.getElementById('side-overlay').classList.remove('open');
-            document.getElementById('side-panel').classList.remove('open');
-        }
-
-        function startTimer() {
-            if (autoRefreshInterval) clearInterval(autoRefreshInterval);
-            autoRefreshInterval = setInterval(() => iniciarSincronizacao(true), 300000);
-        }
+        function closeDetails() { unlockScroll(); document.getElementById('side-overlay').classList.remove('open'); document.getElementById('side-panel').classList.remove('open'); }
+        function startTimer() { if (autoRefreshInterval) clearInterval(autoRefreshInterval); autoRefreshInterval = setInterval(() => iniciarSincronizacao(true), 300000); }
 
         window.onclick = function(event) {
-            if (!event.target.closest('.relative')) {
-                const drop = document.getElementById('status-dropdown');
-                if(drop) drop.classList.remove('open');
-            }
-            const modalSelecao = document.getElementById('modal-selecao-obras');
-            if (event.target === modalSelecao) fecharModalSelecao();
-            const modalPendencias = document.getElementById('modal-pendencias');
-            if (event.target === modalPendencias) fecharModalPendencias();
+            if (!event.target.closest('.relative')) { const drop = document.getElementById('status-dropdown'); if(drop) drop.classList.remove('open'); }
+            if (event.target.id === 'modal-selecao-obras') fecharModalSelecao();
+            if (event.target.id === 'modal-pendencias') fecharModalPendencias();
         }
 
         window.onload = () => {
             lockScroll();
-            document.getElementById('login-overlay').style.display = 'flex';
+            const overlay = document.getElementById('login-overlay');
+            const content = document.getElementById('login-content');
+            overlay.classList.add('modal-visible-state');
+            overlay.classList.remove('modal-hidden-state');
+            setTimeout(() => {
+                content.classList.add('modal-scale-show');
+                content.classList.remove('modal-scale-hide');
+            }, 100);
+
             document.getElementById('popup-token').addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    realizarLogin();
-                }
+                if (e.key === 'Enter') { e.preventDefault(); realizarLogin(); }
             });
         };
     </script>
 </body>
-
 </html>
