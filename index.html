@@ -1259,7 +1259,6 @@
             document.getElementById('side-overlay').classList.add('open');
             document.getElementById('side-panel').classList.add('open');
 
-            // Passamos os componentes da data para que o refresh possa recalcular o "dono" do dia
             document.getElementById('side-refresh-btn').onclick = () => refreshSpecificReport(obraId, dia, mes, ano);
 
             const cache = reportDetailsCache[reportId];
@@ -1286,43 +1285,45 @@
             icon.classList.add('sync-spinning');
 
             try {
-                // 1. Atualiza dados globais para detectar exclusões e mudanças de cobertura
+                // 1. Atualiza dados globais para detectar exclusões ou novos relatórios
                 await iniciarSincronizacao(true);
 
-                // 2. Encontra qual relatório "manda" nesse dia agora (Individual > Período)
+                // 2. Encontra qual relatório agora é o "dono" do dia baseado na regra (Individual > Período)
                 const res = cachedData.find(r => r.obra._id === obraId);
                 if (!res) return;
 
                 const targetDate = new Date(ano, mes, dia, 12, 0, 0);
-                let currentReport = null;
+                let winnerReport = null;
 
                 res.relsMes.forEach(r => {
                     let dIn = parseDateSafely(r.data);
                     let dOut = r.dataFim ? parseDateSafely(r.dataFim) : dIn;
+                    
                     if (targetDate >= dIn && targetDate <= dOut) {
-                        if (!currentReport) {
-                            currentReport = r;
+                        if (!winnerReport) {
+                            winnerReport = r;
                         } else {
                             const isPeriodN = r.dataFim && r.dataFim !== r.data;
-                            const isPeriodE = currentReport.dataFim && currentReport.dataFim !== currentReport.data;
-                            // REGRA: Individual ganha do Período
-                            if (!isPeriodN && isPeriodE) currentReport = r;
-                            else if (getStatusConfig(r.status).priority > getStatusConfig(currentReport.status).priority) currentReport = r;
+                            const isPeriodW = winnerReport.dataFim && winnerReport.dataFim !== winnerReport.data;
+                            
+                            // Regra de Ouro: Individual atropela Período
+                            if (!isPeriodN && isPeriodW) winnerReport = r;
+                            else if (getStatusConfig(r.status).priority > getStatusConfig(winnerReport.status).priority) winnerReport = r;
                         }
                     }
                 });
 
-                if (currentReport) {
-                    // 3. Busca detalhes do relatório que assumiu o dia
-                    let det = await apiCall(`/obras/${obraId}/relatorios/${currentReport._id}`);
+                if (winnerReport) {
+                    // 3. Busca os detalhes do relatório que ganhou a vaga (seja ele um novo Individual ou o Período remanescente)
+                    let det = await apiCall(`/obras/${obraId}/relatorios/${winnerReport._id}`);
                     if (det && !det.error) {
-                        reportDetailsCache[currentReport._id] = det;
+                        reportDetailsCache[winnerReport._id] = det;
                         renderDetailsContent(det);
-                        // Atualiza o link externo para o novo ID
-                        document.getElementById('side-obra-link-container').innerHTML = `<a href="${WEB_APP_BASE}${obraId}/relatorios/${currentReport._id}" target="_blank" class="btn-link-externo"><i class="fas fa-external-link-alt"></i></a>`;
+                        // Atualiza as referências de ID na aba lateral
+                        document.getElementById('side-obra-link-container').innerHTML = `<a href="${WEB_APP_BASE}${obraId}/relatorios/${winnerReport._id}" target="_blank" class="btn-link-externo"><i class="fas fa-external-link-alt"></i></a>`;
                     }
                 } else {
-                    document.getElementById('side-content').innerHTML = `<div class="p-8 text-center text-gray-400 text-xs font-black uppercase">Nenhum relatório encontrado para este dia.</div>`;
+                    document.getElementById('side-content').innerHTML = `<div class="p-8 text-center text-gray-400 text-xs font-black uppercase">Nenhum relatório cobre esta data agora.</div>`;
                 }
             } catch (e) {
                 console.error(e);
