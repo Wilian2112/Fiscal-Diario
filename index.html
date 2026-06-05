@@ -1209,13 +1209,13 @@
                 html += `<div id="day-${res.obra._id}-${dataIdFormat}" onclick="if('${r?._id || ''}') openDetails('${res.obra._id}', '${res.obra.nome.replace(/'/g, "\\'")}', ${d}, ${mes}, ${ano}, '${r?._id || ''}')" class="calendar-day ${conf.css} ${weekendClass} ${isToday ? 'day-today' : ''}">${d}</div>`;
             }
             html += `</div>
-                <div class="mt-auto flex flex-wrap gap-x-4 gap-y-2 opacity-70">
-                    <div class="flex items-center gap-1.5"><div class="w-2.5 h-2.5 rounded-sm bg-[#15803d]"></div><span class="text-[8px] font-black uppercase text-gray-500">Aprovado</span></div>
-                    <div class="flex items-center gap-1.5"><div class="w-2.5 h-2.5 rounded-sm bg-[#ef4444]"></div><span class="text-[8px] font-black uppercase text-gray-500">Revisar</span></div>
-                    <div class="flex items-center gap-1.5"><div class="w-2.5 h-2.5 rounded-sm bg-[#fbbf24]"></div><span class="text-[8px] font-black uppercase text-gray-500">Pendente</span></div>
-                    <div class="flex items-center gap-1.5">
+                <div class="mt-auto flex flex-wrap justify-center gap-x-6 gap-y-3 opacity-70">
+                    <div class="flex items-center gap-1.5 shrink-0"><div class="w-2.5 h-2.5 rounded-sm bg-[#15803d]"></div><span class="text-[8px] font-black uppercase text-gray-500 whitespace-nowrap">Aprovado</span></div>
+                    <div class="flex items-center gap-1.5 shrink-0"><div class="w-2.5 h-2.5 rounded-sm bg-[#ef4444]"></div><span class="text-[8px] font-black uppercase text-gray-500 whitespace-nowrap">Revisar</span></div>
+                    <div class="flex items-center gap-1.5 shrink-0"><div class="w-2.5 h-2.5 rounded-sm bg-[#fbbf24]"></div><span class="text-[8px] font-black uppercase text-gray-500 whitespace-nowrap">Pendente</span></div>
+                    <div class="flex items-center gap-1.5 shrink-0">
                         <div class="w-4 h-2.5 rounded-sm" style="background: repeating-linear-gradient(-45deg, #fbbf24, #fbbf24 4px, #000 4px, #000 8px);"></div>
-                        <span class="text-[8px] font-black uppercase text-gray-500">Ocorrência</span>
+                        <span class="text-[8px] font-black uppercase text-gray-500 whitespace-nowrap">Ocorrência</span>
                     </div>
                 </div>
             </div>`;
