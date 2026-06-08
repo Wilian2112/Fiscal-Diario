@@ -738,7 +738,7 @@
             const refreshIcon = document.getElementById('pendencias-sync-icon');
 
             if (!isRefresh) {
-                container.innerText = "Sincronizando dados atuais...";
+                container.innerText = "Carregando Informações Atualizadas...";
             }
             
             if (refreshIcon) refreshIcon.classList.add('sync-spinning');
@@ -926,7 +926,7 @@
                 });
                 const data = await response.json();
 
-                if (response.status !== 200 || !data._id) throw new Error("Invalido");
+                if (response.status !== 200 || !data._id) throw new Error("Inválido");
 
                 errorMsg.classList.add('hidden');
                 input.classList.remove('border-red-500', 'bg-red-50');
