@@ -1101,7 +1101,19 @@
         function render() {
             const container = document.getElementById('dashboard');
             container.innerHTML = '';
-            const filtered = cachedData.filter(res => selectedObraIds.has(res.obra._id) && res.obra.nome.toLowerCase().includes(globalSearchTerm));
+            
+            // ORDENAÇÃO SOLICITADA
+            const orderMap = { "Em Andamento": 1, "Paralisada": 2, "Não Iniciada": 3, "Concluída": 4 };
+            
+            const filtered = cachedData
+                .filter(res => selectedObraIds.has(res.obra._id) && res.obra.nome.toLowerCase().includes(globalSearchTerm))
+                .sort((a, b) => {
+                    const orderA = orderMap[a.obra.status.descricao] || 99;
+                    const orderB = orderMap[b.obra.status.descricao] || 99;
+                    if (orderA !== orderB) return orderA - orderB;
+                    return a.obra.nome.localeCompare(b.obra.nome);
+                });
+
             const statusLabel = document.getElementById('current-status-label');
             if(statusLabel) statusLabel.innerText = `${selectedStatus === 'todos' ? 'Status: Todos' : selectedStatus} (${filtered.length})`;
 
@@ -1136,7 +1148,15 @@
                 }
             });
 
-            let html = `<div class="bg-white p-7 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col h-full"><div class="flex items-center justify-between mb-8"><h3 title="${res.obra.nome}" class="font-black text-sm text-gray-800 truncate uppercase tracking-tighter w-4/5 cursor-help">${res.obra.nome}</h3><a href="${WEB_APP_BASE}${res.obra._id}/relatorios" target="_blank" class="btn-link-externo"><i class="fas fa-external-link-alt"></i></a></div><div class="calendar-grid mb-6"><div class="calendar-header-day">D</div><div class="calendar-header-day">S</div><div class="calendar-header-day">T</div><div class="calendar-header-day">Q</div><div class="calendar-header-day">Q</div><div class="calendar-header-day">S</div><div class="calendar-header-day">S</div>`;
+            // LÓGICA DO BALÃO DE STATUS COLORIDO
+            const statusDesc = res.obra.status.descricao;
+            let badgeColor = "bg-gray-100 text-gray-600 border-gray-200";
+            if (statusDesc.includes("Andamento")) badgeColor = "bg-blue-50 text-blue-600 border-blue-100";
+            else if (statusDesc.includes("Paralisada")) badgeColor = "bg-amber-50 text-amber-600 border-amber-100";
+            else if (statusDesc.includes("Iniciada")) badgeColor = "bg-red-50 text-red-600 border-red-100";
+            else if (statusDesc.includes("Concluída")) badgeColor = "bg-emerald-50 text-emerald-600 border-emerald-100";
+
+            let html = `<div class="bg-white p-7 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col h-full"><div class="flex items-center justify-between mb-8"><h3 title="${res.obra.nome}" class="font-black text-sm text-gray-800 truncate uppercase tracking-tighter w-1/2 cursor-help">${res.obra.nome}</h3><div class="flex items-center gap-2"><span class="px-2.5 py-1 rounded-full border ${badgeColor} text-[8px] font-black uppercase whitespace-nowrap">${statusDesc}</span><a href="${WEB_APP_BASE}${res.obra._id}/relatorios" target="_blank" class="btn-link-externo"><i class="fas fa-external-link-alt"></i></a></div></div><div class="calendar-grid mb-6"><div class="calendar-header-day">D</div><div class="calendar-header-day">S</div><div class="calendar-header-day">T</div><div class="calendar-header-day">Q</div><div class="calendar-header-day">Q</div><div class="calendar-header-day">S</div><div class="calendar-header-day">S</div>`;
             for (let i = 0; i < primDiaSemana; i++) html += `<div></div>`;
             const todayStr = `${realToday.getFullYear()}-${(realToday.getMonth()+1).toString().padStart(2,'0')}-${realToday.getDate().toString().padStart(2,'0')}`;
             for (let d = 1; d <= diasNoMes; d++) {
@@ -1221,7 +1241,6 @@
             html += section('fas fa-tractor', 'Maquinário', det.equipamentos?.length || 0, det.equipamentos?.map(e => `<div class="flex justify-between py-1 border-b"><span>${e.descricao}</span><b>${e.quantidade || 1}</b></div>`).join('') || 'Nenhum equipamento.');
             html += section('fas fa-tasks', 'Serviços Executados', det.atividades?.length || 0, det.atividades?.map(a => `<div class="mb-2 pb-1 border-b"><b>${a.descricao}</b><br><small class="text-green-700 uppercase font-bold">${a.status?.descricao} - ${a.porcentagem}%</small></div>`).join('') || 'Nenhuma atividade.');
             
-            // CORREÇÃO GALERIA DE FOTOS: verifica se há fotos antes de renderizar a div grid
             const fotosConteudo = (det.galeriaDeFotos && det.galeriaDeFotos.length > 0) 
                 ? `<div class="grid grid-cols-2 gap-2">${det.galeriaDeFotos.map(f => `<img src="${f.urlMiniatura || f.url}" class="w-full aspect-square object-cover rounded-xl" loading="lazy">`).join('')}</div>` 
                 : 'Nenhuma foto.';
