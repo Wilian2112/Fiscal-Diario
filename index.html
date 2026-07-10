@@ -561,6 +561,7 @@
             return str ? str.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ' ').trim() : "";
         }
 
+        // Função CSS para o sticker de status
         function getObraStatusStyle(descricao) {
             const desc = normalizeString(descricao);
             if (desc.includes("andamento")) return "text-blue-700 border-blue-200 bg-blue-50";
@@ -570,7 +571,7 @@
             return "text-gray-500 border-gray-200 bg-gray-50";
         }
 
-        function abrirAnim(overlayId, contentId) {
+        function abrirModalAnim(overlayId, contentId) {
             lockScroll();
             const overlay = document.getElementById(overlayId);
             const content = document.getElementById(contentId);
@@ -582,7 +583,7 @@
             }, 10);
         }
 
-        function fecharAnim(overlayId, contentId) {
+        function fecharModalAnim(overlayId, contentId) {
             const overlay = document.getElementById(overlayId);
             const content = document.getElementById(contentId);
             content.classList.add('modal-scale-hide');
@@ -618,12 +619,12 @@
         }
 
         function abrirModalSelecao() {
-            abrirAnim('modal-selecao-obras', 'modal-selecao-content');
+            abrirModalAnim('modal-selecao-obras', 'modal-selecao-content');
             renderListaSelecao();
         }
 
         function fecharModalSelecao() {
-            fecharAnim('modal-selecao-obras', 'modal-selecao-content');
+            fecharModalAnim('modal-selecao-obras', 'modal-selecao-content');
         }
 
         function renderListaSelecao() {
@@ -647,10 +648,9 @@
                     const div = document.createElement('div');
                     const isChecked = selectedObraIds.has(obra._id);
                     
-                    // BALÃO INTEIRO CLICÁVEL
                     div.className = `modal-obra-row flex items-center gap-3 py-2.5 px-3 border-b border-gray-50 last:border-0 rounded-lg cursor-pointer ${isChecked ? 'selected' : ''}`;
                     div.onclick = () => toggleObraSelecao(obra._id);
-                    
+
                     div.innerHTML = `
                         <input type="checkbox" class="custom-checkbox pointer-events-none" ${isChecked ? 'checked' : ''}>
                         <div class="flex flex-col truncate">
@@ -691,6 +691,7 @@
             render();
         }
 
+        // LÓGICA DE PENDÊNCIAS
         function formatarIntervalos(dias, mes, ano) {
             if (dias.length === 0) return "";
             dias.sort((a, b) => a - b);
@@ -702,49 +703,27 @@
                     let atual = dias[j];
                     let proximo = dias[j + 1];
                     let diff = proximo - atual;
-
-                    if (diff === 1) {
-                        j++;
-                    } else if (diff <= 3) {
+                    if (diff === 1) { j++; } 
+                    else if (diff <= 3) {
                         let temDiaUtilNoMeio = false;
                         for (let d = atual + 1; d < proximo; d++) {
                             let dataTeste = new Date(ano, mes, d);
-                            if (dataTeste.getDay() !== 0 && dataTeste.getDay() !== 6) {
-                                temDiaUtilNoMeio = true;
-                                break;
-                            }
+                            if (dataTeste.getDay() !== 0 && dataTeste.getDay() !== 6) { temDiaUtilNoMeio = true; break; }
                         }
-                        if (!temDiaUtilNoMeio) j++;
-                        else break;
-                    } else {
-                        break;
-                    }
+                        if (!temDiaUtilNoMeio) j++; else break;
+                    } else { break; }
                 }
-
                 let rangeLen = (j - i) + 1;
-                if (rangeLen >= 3) {
-                    segmentos.push({
-                        tipo: 'faixa',
-                        de: dias[i],
-                        ate: dias[j]
-                    });
-                } else {
-                    let vals = [];
-                    for (let k = i; k <= j; k++) vals.push(dias[k]);
-
+                if (rangeLen >= 3) { segmentos.push({ tipo: 'faixa', de: dias[i], ate: dias[j] }); } 
+                else {
+                    let vals = []; for (let k = i; k <= j; k++) vals.push(dias[k]);
                     let ultimoSegmento = segmentos[segmentos.length - 1];
-                    if (ultimoSegmento && ultimoSegmento.tipo === 'unicos') {
-                        ultimoSegmento.valores.push(...vals);
-                    } else {
-                        segmentos.push({
-                            tipo: 'unicos',
-                            valores: vals
-                        });
-                    }
+                    if (ultimoSegmento && ultimoSegmento.tipo === 'unicos') { ultimoSegmento.valores.push(...vals); } 
+                    else { segmentos.push({ tipo: 'unicos', valores: vals }); }
                 }
                 i = j + 1;
             }
-            return segments.map(s => {
+            return segmentos.map(s => {
                 if (s.tipo === 'unicos') {
                     const label = s.valores.length > 1 ? "DIAS" : "DIA";
                     return `${label} ${s.valores.map(v => v.toString().padStart(2, '0')).join(', ')}`;
@@ -753,42 +732,21 @@
             }).join(' & ');
         }
 
-        async function abrirModalPendencias() {
-            abrirAnim('modal-pendencias', 'modal-pendencias-content');
-            atualizarListaPendencias(false);
-        }
-
         async function atualizarListaPendencias(isRefresh = false) {
             const container = document.getElementById('container-texto-whatsapp');
             const refreshIcon = document.getElementById('pendencias-sync-icon');
-
-            if (!isRefresh) {
-                container.innerText = "Carregando Informações Atualizadas...";
-            }
-            
+            if (!isRefresh) { container.innerText = "Carregando Informações Atualizadas..."; }
             if (refreshIcon) refreshIcon.classList.add('sync-spinning');
-
             try {
                 await iniciarSincronizacao(true);
-
-                const respPlanilha = await fetch(LINK_PLANILHA_CSV + "&cache_buster=" + Date.now(), {
-                    cache: "no-store",
-                    headers: {
-                        'Cache-Control': 'no-cache',
-                        'Pragma': 'no-cache'
-                    }
-                });
-
+                const respPlanilha = await fetch(LINK_PLANILHA_CSV + "&cache_buster=" + Date.now(), { cache: "no-store" });
                 const csvText = await respPlanilha.text();
                 const separador = csvText.includes(';') ? ';' : ',';
                 const linhasCsv = csvText.split(/\r?\n/).filter(l => l.trim() !== "");
-
                 if (linhasCsv.length < 1) throw new Error("Planilha vazia");
-
                 const cabecalho = linhasCsv[0].split(separador).map(c => c.replace(/"/g, '').trim().toLowerCase());
                 const idxEng = cabecalho.findIndex(c => c.includes('eng') || c.includes('nome'));
                 const idxObra = cabecalho.findIndex(c => c.includes('obra'));
-
                 const mapaEngenheiros = {};
                 linhasCsv.slice(1).forEach(linha => {
                     const colunas = linha.split(separador).map(c => c.replace(/"/g, '').trim());
@@ -796,33 +754,29 @@
                         mapaEngenheiros[normalizeString(colunas[idxObra])] = colunas[idxEng];
                     }
                 });
-
                 const mesVisivel = globalViewDate.getMonth();
                 const anoVisivel = globalViewDate.getFullYear();
                 const hoje = new Date();
                 const ultimoDiaNoMes = new Date(anoVisivel, mesVisivel + 1, 0).getDate();
                 const diaLimite = (anoVisivel === hoje.getFullYear() && mesVisivel === hoje.getMonth()) ? hoje.getDate() : ultimoDiaNoMes;
-
                 const agrupadoEngenheiro = {};
 
                 cachedData.forEach(res => {
                     if (!selectedObraIds.has(res.obra._id)) return;
+                    
+                    const nomeObraUpper = res.obra.nome.toUpperCase();
+                    const isDiversasGarantias = nomeObraUpper.includes("DIVERSAS - GARANTIAS");
 
                     const nomeObraNorm = normalizeString(res.obra.nome);
                     let engNome = "SEM ENGENHEIRO";
-
                     for (let obraPlanilha in mapaEngenheiros) {
                         if (nomeObraNorm.includes(obraPlanilha) || obraPlanilha.includes(nomeObraNorm)) {
-                            engNome = mapaEngenheiros[obraPlanilha];
-                            break;
+                            engNome = mapaEngenheiros[obraPlanilha]; break;
                         }
                     }
-
                     if (!agrupadoEngenheiro[engNome]) agrupadoEngenheiro[engNome] = [];
-
                     const diasPreenchidos = new Set();
                     const diasPendentes = new Set();
-
                     res.relsMes.forEach(r => {
                         let dIn = parseDateSafely(r.data);
                         let dOut = r.dataFim ? parseDateSafely(r.dataFim) : dIn;
@@ -842,10 +796,13 @@
                     });
 
                     const faltantes = [];
-                    for (let d = 1; d <= diaLimite; d++) {
-                        if (!diasPreenchidos.has(d)) {
-                            const dataTeste = new Date(anoVisivel, mesVisivel, d);
-                            if (dataTeste.getDay() !== 0 && dataTeste.getDay() !== 6) faltantes.push(d);
+                    // SÓ GERA FALTANTES SE NÃO FOR "DIVERSAS - GARANTIAS"
+                    if (!isDiversasGarantias) {
+                        for (let d = 1; d <= diaLimite; d++) {
+                            if (!diasPreenchidos.has(d)) {
+                                const dataTeste = new Date(anoVisivel, mesVisivel, d);
+                                if (dataTeste.getDay() !== 0 && dataTeste.getDay() !== 6) faltantes.push(d);
+                            }
                         }
                     }
 
@@ -859,17 +816,12 @@
                         });
                     }
                 });
-
                 const mesNome = globalViewDate.toLocaleString('pt-br', { month: 'long' });
                 let texto = "";
-
                 const chavesEngenheiros = Object.keys(agrupadoEngenheiro).sort((a, b) => {
-                    const labelNaoEncontrado = "SEM ENGENHEIRO";
-                    if (a === labelNaoEncontrado) return 1;
-                    if (b === labelNaoEncontrado) return -1;
+                    if (a === "SEM ENGENHEIRO") return 1; if (b === "SEM ENGENHEIRO") return -1;
                     return a.localeCompare(b);
                 });
-
                 chavesEngenheiros.forEach(eng => {
                     texto += `*\`${eng.toUpperCase()}\`*\n*${mesNome.charAt(0).toUpperCase() + mesNome.slice(1)}*\n`;
                     agrupadoEngenheiro[eng].forEach(item => {
@@ -880,13 +832,17 @@
                 });
                 container.innerText = texto || "✅ Nenhuma pendência encontrada!";
                 if (isRefresh) mostrarAviso("DADOS ATUALIZADOS!");
-
             } catch (e) {
                 container.innerText = "Erro ao buscar dados.";
                 console.error(e);
             } finally {
                 if (refreshIcon) refreshIcon.classList.remove('sync-spinning');
             }
+        }
+
+        function abrirModalPendencias() {
+            abrirModalAnim('modal-pendencias', 'modal-pendencias-content');
+            atualizarListaPendencias(false);
         }
 
         function mostrarAviso(mensagem) {
@@ -915,7 +871,7 @@
         }
 
         function fecharModalPendencias() {
-            fecharAnim('modal-pendencias', 'modal-pendencias-content');
+            fecharModalAnim('modal-pendencias', 'modal-pendencias-content');
         }
 
         function toggleStatusDropdown() {
@@ -928,38 +884,28 @@
             const errorText = document.getElementById('error-text');
             const btn = document.getElementById('btn-login-acessar');
             const token = input.value.trim();
-
             const dispararErro = (mensagem) => {
                 errorText.innerText = mensagem;
-                errorMsg.classList.remove('hidden');
-                errorMsg.classList.remove('animate-shake');
-                void errorMsg.offsetWidth; 
-                errorMsg.classList.add('animate-shake');
+                errorMsg.classList.remove('hidden', 'animate-shake');
+                void errorMsg.offsetWidth; errorMsg.classList.add('animate-shake');
                 input.classList.add('border-red-500', 'bg-red-50');
                 input.focus();
             };
-
             if (!token) { dispararErro("Por favor, insira o token"); return; }
-
             const originalText = btn.innerText;
             btn.innerText = "CARREGANDO...";
             btn.disabled = true;
-
             try {
                 const response = await fetch(`${API_ENDPOINT}/empresa`, {
                     headers: { 'token': token, 'Content-Type': 'application/json' }
                 });
                 const data = await response.json();
-
                 if (response.status !== 200 || !data._id) throw new Error("Inválido");
-
                 errorMsg.classList.add('hidden');
                 input.classList.remove('border-red-500', 'bg-red-50');
                 sessionStorage.setItem('diario_token', token);
-                
-                fecharAnim('login-overlay', 'login-content');
+                fecharModalAnim('login-overlay', 'login-content');
                 iniciarSincronizacao();
-
             } catch (e) {
                 dispararErro("Token inválido ou expirado");
                 input.value = ""; 
@@ -1003,17 +949,14 @@
             const syncIcon = document.getElementById('sync-icon-manual');
             const tag = document.getElementById('last-update-tag');
             if(tag) tag.innerText = "Sincronizando";
-
             if (isSilent) { if(syncIcon) syncIcon.classList.add('sync-spinning'); } 
             else {
                 document.getElementById('loader').style.display = 'block';
                 document.getElementById('global-month-label').innerText = 'CARREGANDO...';
             }
-
             const anoAtual = new Date().getFullYear();
             const inicioReq = "2010-01-01";
             const fimReq = `${anoAtual}-12-31`;
-
             const responseObras = await apiCall('/obras');
             if (Array.isArray(responseObras)) {
                 todasObras = responseObras;
@@ -1025,17 +968,13 @@
                 });
                 syncSelectionWithFilters();
             }
-
             const results = await Promise.all(todasObras.map(async (obra) => {
                 const relsList = await apiCall(`/obras/${obra._id}/relatorios?dataInicio=${inicioReq}&dataFim=${fimReq}&limite=1000`);
                 return { obra, relsMes: Array.isArray(relsList) ? relsList : [] };
             }));
-
             cachedData = results;
             updateGlobalLabel();
-            
             if(tag) tag.innerText = `Atualizado às ${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`;
-            
             if (isSilent) { if(syncIcon) syncIcon.classList.remove('sync-spinning'); } 
             else { document.getElementById('loader').style.display = 'none'; }
             render();
@@ -1063,7 +1002,6 @@
             const mesVisivel = globalViewDate.getMonth();
             const anoVisivel = globalViewDate.getFullYear();
             const obrasVisiveis = cachedData.filter(res => selectedObraIds.has(res.obra._id) && res.obra.nome.toLowerCase().includes(globalSearchTerm));
-
             const syncPromises = [];
             for (const res of obrasVisiveis) {
                 const relsMap = {};
@@ -1075,12 +1013,11 @@
                     while (curr <= dOut) {
                         if (curr.getMonth() === mesVisivel && curr.getFullYear() === anoVisivel) {
                             const key = `${curr.getFullYear()}-${(curr.getMonth()+1).toString().padStart(2,'0')}-${curr.getDate().toString().padStart(2,'0')}`;
-                            if (!relsMap[key] || getStatusConfig(relsMap[key].status).priority > getStatusConfig(relsMap[key].status).priority) relsMap[key] = r;
+                            if (!relsMap[key] || getStatusConfig(r.status).priority > getStatusConfig(relsMap[key].status).priority) relsMap[key] = r;
                         }
                         curr.setDate(curr.getDate() + 1);
                     }
                 });
-
                 const activeReportIds = [...new Set(Object.values(relsMap).map(r => r._id))];
                 activeReportIds.forEach(rId => {
                     syncPromises.push((async () => {
@@ -1114,16 +1051,11 @@
                 if (hiddenCount > 0) {
                     hiddenTag.innerText = `(${hiddenCount} OCULTA${hiddenCount !== 1 ? 'S' : ''})`;
                     hiddenTag.classList.remove('hidden');
-                } else {
-                    hiddenTag.classList.add('hidden');
-                }
+                } else { hiddenTag.classList.add('hidden'); }
             }
-
             const container = document.getElementById('dashboard');
             container.innerHTML = '';
-            
             const filtered = cachedData.filter(res => selectedObraIds.has(res.obra._id) && res.obra.nome.toLowerCase().includes(globalSearchTerm));
-            
             filtered.sort((a, b) => {
                 const getPriority = (desc) => {
                     const d = normalizeString(desc);
@@ -1138,10 +1070,8 @@
                 if (pA !== pB) return pA - pB;
                 return a.obra.nome.localeCompare(b.obra.nome);
             });
-
             const statusLabel = document.getElementById('current-status-label');
             if(statusLabel) statusLabel.innerText = `${selectedStatus === 'todos' ? 'Status: Todos' : selectedStatus} (${filtered.length})`;
-
             filtered.forEach(res => {
                 const wrapper = document.createElement('div');
                 wrapper.innerHTML = renderCalendarItemMarkup(res);
@@ -1158,7 +1088,6 @@
             const realToday = new Date();
             const relsMap = {};
             const obraStyle = getObraStatusStyle(res.obra.status.descricao);
-
             res.relsMes.forEach(r => {
                 let dIn = parseDateSafely(r.data);
                 let dOut = r.dataFim ? parseDateSafely(r.dataFim) : dIn;
@@ -1167,14 +1096,13 @@
                     while (curr <= dOut) {
                         if (curr.getMonth() === mes && curr.getFullYear() === ano) {
                             const key = `${curr.getFullYear()}-${(curr.getMonth()+1).toString().padStart(2,'0')}-${curr.getDate().toString().padStart(2,'0')}`;
-                            if (!relsMap[key] || getStatusConfig(r.status).priority > getStatusConfig(r.status).priority) relsMap[key] = r;
+                            if (!relsMap[key] || getStatusConfig(r.status).priority > getStatusConfig(relsMap[key].status).priority) relsMap[key] = r;
                         }
                         curr.setDate(curr.getDate() + 1);
                     }
                 }
             });
-
-            let html = `<div class="bg-white p-7 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col h-full"><div class="flex items-center justify-between mb-8"><h3 title="${res.obra.nome}" class="font-black text-sm text-gray-800 truncate uppercase tracking-tighter w-4/5 cursor-help">${res.obra.nome}</h3><div class="flex items-center gap-2 shrink-0"><span class="text-[7px] font-black uppercase px-1.5 py-0.5 border rounded ${obraStyle}">${res.obra.status.descricao}</span><a href="${WEB_APP_BASE}${res.obra._id}/relatorios" target="_blank" class="btn-link-externo"><i class="fas fa-external-link-alt"></i></a></div></div><div class="calendar-grid mb-6"><div class="calendar-header-day">D</div><div class="calendar-header-day">S</div><div class="calendar-header-day">T</div><div class="calendar-header-day">Q</div><div class="calendar-header-day">Q</div><div class="calendar-header-day">S</div><div class="calendar-header-day">S</div>`;
+            let html = `<div class="bg-white p-7 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col h-full"><div class="flex items-center justify-between mb-8"><h3 title="${res.obra.nome}" class="font-black text-sm text-gray-800 truncate uppercase tracking-tighter w-4/5 cursor-help">${res.obra.nome}</h3><div class="flex items-center gap-2 shrink-0"><span class="text-[9px] font-black uppercase px-2 py-1 border rounded-md ${obraStyle}">${res.obra.status.descricao}</span><a href="${WEB_APP_BASE}${res.obra._id}/relatorios" target="_blank" class="btn-link-externo"><i class="fas fa-external-link-alt"></i></a></div></div><div class="calendar-grid mb-6"><div class="calendar-header-day">D</div><div class="calendar-header-day">S</div><div class="calendar-header-day">T</div><div class="calendar-header-day">Q</div><div class="calendar-header-day">Q</div><div class="calendar-header-day">S</div><div class="calendar-header-day">S</div>`;
             for (let i = 0; i < primDiaSemana; i++) html += `<div></div>`;
             const todayStr = `${realToday.getFullYear()}-${(realToday.getMonth()+1).toString().padStart(2,'0')}-${realToday.getDate().toString().padStart(2,'0')}`;
             for (let d = 1; d <= diasNoMes; d++) {
@@ -1198,17 +1126,15 @@
             const displayDate = `${dia.toString().padStart(2, '0')}/${(mes + 1).toString().padStart(2, '0')}/${ano}`;
             const obraRef = todasObras.find(o => o._id === obraId);
             const obraStyle = getObraStatusStyle(obraRef?.status?.descricao || "");
-            
             document.getElementById('side-obra-nome').innerText = nomeObra;
             document.getElementById('side-obra-link-container').innerHTML = `
-                <span class="text-[7px] font-black uppercase px-1.5 py-0.5 border rounded ${obraStyle} mr-2">${obraRef?.status?.descricao || ""}</span>
+                <span class="text-[9px] font-black uppercase px-2 py-1 border rounded-md ${obraStyle} mr-2">${obraRef?.status?.descricao || ""}</span>
                 <a href="${WEB_APP_BASE}${obraId}/relatorios/${reportId}" target="_blank" class="btn-link-externo"><i class="fas fa-external-link-alt"></i></a>
             `;
             document.getElementById('side-data').innerText = displayDate;
             document.getElementById('side-overlay').classList.add('open');
             document.getElementById('side-panel').classList.add('open');
             document.getElementById('side-refresh-btn').onclick = () => refreshSpecificReport(obraId, dia, mes, ano);
-
             const cache = reportDetailsCache[reportId];
             if (cache && cache.atividades) { renderDetailsContent(cache); } 
             else { document.getElementById('side-content').innerHTML = `<div class="flex flex-col items-center justify-center py-20"><div class="w-8 h-8 border-4 border-green-700 border-t-transparent rounded-full animate-spin mb-4"></div><span class="text-[9px] font-black uppercase">Carregando dados técnicos...</span></div>`; }
@@ -1269,12 +1195,10 @@
             html += section('fas fa-users', 'Efetivo em Campo', (det.maoDeObra?.padrao?.length || 0) + (det.maoDeObra?.personalizada?.length || 0), (padrao + perso) || 'Nenhuma informação.');
             html += section('fas fa-tractor', 'Maquinário', det.equipamentos?.length || 0, det.equipamentos?.map(e => `<div class="flex justify-between py-1 border-b"><span>${e.descricao}</span><b>${e.quantidade || 1}</b></div>`).join('') || 'Nenhum equipamento.');
             html += section('fas fa-tasks', 'Serviços Executados', det.atividades?.length || 0, det.atividades?.map(a => `<div class="mb-2 pb-1 border-b"><b>${a.descricao}</b><br><small class="text-green-700 uppercase font-bold">${a.status?.descricao} - ${a.porcentagem}%</small></div>`).join('') || 'Nenhuma atividade.');
-            
             const fotosConteudo = (det.galeriaDeFotos && det.galeriaDeFotos.length > 0) 
                 ? `<div class="grid grid-cols-2 gap-2">${det.galeriaDeFotos.map(f => `<img src="${f.urlMiniatura || f.url}" class="w-full aspect-square object-cover rounded-xl" loading="lazy">`).join('')}</div>` 
                 : 'Nenhuma foto.';
             html += section('fas fa-camera', 'Galeria de Fotos', det.galeriaDeFotos?.length || 0, fotosConteudo);
-
             if (det.ocorrencias?.length > 0) {
                 html += `<div class="mt-6 text-[9px] font-black text-red-500 uppercase tracking-widest mb-3">Ocorrências</div>`;
                 det.ocorrencias.forEach(o => { html += `<div class="p-4 bg-red-50 border border-red-100 rounded-2xl mb-2 text-xs font-bold text-red-700">${o.descricao}</div>`; });
@@ -1301,7 +1225,6 @@
                 content.classList.add('modal-scale-show');
                 content.classList.remove('modal-scale-hide');
             }, 100);
-
             document.getElementById('popup-token').addEventListener('keydown', function(e) {
                 if (e.key === 'Enter') { e.preventDefault(); realizarLogin(); }
             });
