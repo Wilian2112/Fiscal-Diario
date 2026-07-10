@@ -494,7 +494,7 @@
                 </div>
 
                 <button onclick="abrirModalSelecao()" class="px-2.5 py-2.5 bg-white border border-gray-200 rounded-xl text-[10px] font-black hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center gap-2 text-gray-600 uppercase">
-                    <i class="fas fa-filter text-green-700"></i> <span class="hidden md:inline">Obras</span>
+                    <i class="fas fa-filter text-green-700"></i> <span class="hidden md:inline">Obras</span><span id="hidden-count-tag" class="text-red-600 ml-1 hidden"></span>
                 </button>
 
                 <button onclick="abrirModalPendencias()" class="flex items-center gap-2 px-3 sm:px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[10px] font-black transition-all shadow-md uppercase">
@@ -561,7 +561,16 @@
             return str ? str.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ' ').trim() : "";
         }
 
-        function abrirModalAnim(overlayId, contentId) {
+        function getObraStatusStyle(descricao) {
+            const desc = normalizeString(descricao);
+            if (desc.includes("andamento")) return "text-blue-700 border-blue-200 bg-blue-50";
+            if (desc.includes("paralisada")) return "text-orange-700 border-orange-200 bg-orange-50";
+            if (desc.includes("nao iniciada")) return "text-red-700 border-red-200 bg-red-50";
+            if (desc.includes("concluida")) return "text-green-700 border-green-200 bg-green-50";
+            return "text-gray-500 border-gray-200 bg-gray-50";
+        }
+
+        function abrirAnim(overlayId, contentId) {
             lockScroll();
             const overlay = document.getElementById(overlayId);
             const content = document.getElementById(contentId);
@@ -573,7 +582,7 @@
             }, 10);
         }
 
-        function fecharModalAnim(overlayId, contentId) {
+        function fecharAnim(overlayId, contentId) {
             const overlay = document.getElementById(overlayId);
             const content = document.getElementById(contentId);
             content.classList.add('modal-scale-hide');
@@ -609,12 +618,12 @@
         }
 
         function abrirModalSelecao() {
-            abrirModalAnim('modal-selecao-obras', 'modal-selecao-content');
+            abrirAnim('modal-selecao-obras', 'modal-selecao-content');
             renderListaSelecao();
         }
 
         function fecharModalSelecao() {
-            fecharModalAnim('modal-selecao-obras', 'modal-selecao-content');
+            fecharAnim('modal-selecao-obras', 'modal-selecao-content');
         }
 
         function renderListaSelecao() {
@@ -637,11 +646,14 @@
                 .forEach(obra => {
                     const div = document.createElement('div');
                     const isChecked = selectedObraIds.has(obra._id);
-                    div.className = `modal-obra-row flex items-center gap-3 py-2.5 px-3 border-b border-gray-50 last:border-0 rounded-lg ${isChecked ? 'selected' : ''}`;
+                    
+                    // BALÃO INTEIRO CLICÁVEL
+                    div.className = `modal-obra-row flex items-center gap-3 py-2.5 px-3 border-b border-gray-50 last:border-0 rounded-lg cursor-pointer ${isChecked ? 'selected' : ''}`;
+                    div.onclick = () => toggleObraSelecao(obra._id);
+                    
                     div.innerHTML = `
-                        <input type="checkbox" class="custom-checkbox" ${isChecked ? 'checked' : ''} 
-                               onchange="toggleObraSelecao('${obra._id}')">
-                        <div class="flex flex-col truncate cursor-pointer" onclick="this.previousElementSibling.click()">
+                        <input type="checkbox" class="custom-checkbox pointer-events-none" ${isChecked ? 'checked' : ''}>
+                        <div class="flex flex-col truncate">
                             <span class="text-sm font-semibold ${isChecked ? 'text-slate-800' : 'text-slate-400'} truncate uppercase">${obra.nome}</span>
                             <span class="text-[9px] font-bold text-gray-400 uppercase">${obra.status.descricao}</span>
                         </div>
@@ -732,7 +744,7 @@
                 }
                 i = j + 1;
             }
-            return segmentos.map(s => {
+            return segments.map(s => {
                 if (s.tipo === 'unicos') {
                     const label = s.valores.length > 1 ? "DIAS" : "DIA";
                     return `${label} ${s.valores.map(v => v.toString().padStart(2, '0')).join(', ')}`;
@@ -742,7 +754,7 @@
         }
 
         async function abrirModalPendencias() {
-            abrirModalAnim('modal-pendencias', 'modal-pendencias-content');
+            abrirAnim('modal-pendencias', 'modal-pendencias-content');
             atualizarListaPendencias(false);
         }
 
@@ -903,7 +915,7 @@
         }
 
         function fecharModalPendencias() {
-            fecharModalAnim('modal-pendencias', 'modal-pendencias-content');
+            fecharAnim('modal-pendencias', 'modal-pendencias-content');
         }
 
         function toggleStatusDropdown() {
@@ -945,7 +957,7 @@
                 input.classList.remove('border-red-500', 'bg-red-50');
                 sessionStorage.setItem('diario_token', token);
                 
-                fecharModalAnim('login-overlay', 'login-content');
+                fecharAnim('login-overlay', 'login-content');
                 iniciarSincronizacao();
 
             } catch (e) {
@@ -989,8 +1001,6 @@
 
         async function iniciarSincronizacao(isSilent = false) {
             const syncIcon = document.getElementById('sync-icon-manual');
-            
-            // ALTERAÇÃO SOLICITADA: Reseta o texto para "Sincronizando" imediatamente
             const tag = document.getElementById('last-update-tag');
             if(tag) tag.innerText = "Sincronizando";
 
@@ -1024,7 +1034,6 @@
             cachedData = results;
             updateGlobalLabel();
             
-            // Atualiza com o horário após o término da sincronização
             if(tag) tag.innerText = `Atualizado às ${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`;
             
             if (isSilent) { if(syncIcon) syncIcon.classList.remove('sync-spinning'); } 
@@ -1066,7 +1075,7 @@
                     while (curr <= dOut) {
                         if (curr.getMonth() === mesVisivel && curr.getFullYear() === anoVisivel) {
                             const key = `${curr.getFullYear()}-${(curr.getMonth()+1).toString().padStart(2,'0')}-${curr.getDate().toString().padStart(2,'0')}`;
-                            if (!relsMap[key] || getStatusConfig(r.status).priority > getStatusConfig(relsMap[key].status).priority) relsMap[key] = r;
+                            if (!relsMap[key] || getStatusConfig(relsMap[key].status).priority > getStatusConfig(relsMap[key].status).priority) relsMap[key] = r;
                         }
                         curr.setDate(curr.getDate() + 1);
                     }
@@ -1099,9 +1108,37 @@
         }
 
         function render() {
+            const hiddenCount = todasObras.filter(o => manualOverrides[o._id] === false).length;
+            const hiddenTag = document.getElementById('hidden-count-tag');
+            if (hiddenTag) {
+                if (hiddenCount > 0) {
+                    hiddenTag.innerText = `(${hiddenCount} OCULTA${hiddenCount !== 1 ? 'S' : ''})`;
+                    hiddenTag.classList.remove('hidden');
+                } else {
+                    hiddenTag.classList.add('hidden');
+                }
+            }
+
             const container = document.getElementById('dashboard');
             container.innerHTML = '';
+            
             const filtered = cachedData.filter(res => selectedObraIds.has(res.obra._id) && res.obra.nome.toLowerCase().includes(globalSearchTerm));
+            
+            filtered.sort((a, b) => {
+                const getPriority = (desc) => {
+                    const d = normalizeString(desc);
+                    if (d.includes("andamento")) return 1;
+                    if (d.includes("paralisada")) return 2;
+                    if (d.includes("nao iniciada")) return 3;
+                    if (d.includes("concluida")) return 4;
+                    return 5;
+                };
+                const pA = getPriority(a.obra.status.descricao);
+                const pB = getPriority(b.obra.status.descricao);
+                if (pA !== pB) return pA - pB;
+                return a.obra.nome.localeCompare(b.obra.nome);
+            });
+
             const statusLabel = document.getElementById('current-status-label');
             if(statusLabel) statusLabel.innerText = `${selectedStatus === 'todos' ? 'Status: Todos' : selectedStatus} (${filtered.length})`;
 
@@ -1120,6 +1157,7 @@
             const diasNoMes = new Date(ano, mes + 1, 0).getDate();
             const realToday = new Date();
             const relsMap = {};
+            const obraStyle = getObraStatusStyle(res.obra.status.descricao);
 
             res.relsMes.forEach(r => {
                 let dIn = parseDateSafely(r.data);
@@ -1136,7 +1174,7 @@
                 }
             });
 
-            let html = `<div class="bg-white p-7 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col h-full"><div class="flex items-center justify-between mb-8"><h3 title="${res.obra.nome}" class="font-black text-sm text-gray-800 truncate uppercase tracking-tighter w-4/5 cursor-help">${res.obra.nome}</h3><a href="${WEB_APP_BASE}${res.obra._id}/relatorios" target="_blank" class="btn-link-externo"><i class="fas fa-external-link-alt"></i></a></div><div class="calendar-grid mb-6"><div class="calendar-header-day">D</div><div class="calendar-header-day">S</div><div class="calendar-header-day">T</div><div class="calendar-header-day">Q</div><div class="calendar-header-day">Q</div><div class="calendar-header-day">S</div><div class="calendar-header-day">S</div>`;
+            let html = `<div class="bg-white p-7 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col h-full"><div class="flex items-center justify-between mb-8"><h3 title="${res.obra.nome}" class="font-black text-sm text-gray-800 truncate uppercase tracking-tighter w-4/5 cursor-help">${res.obra.nome}</h3><div class="flex items-center gap-2 shrink-0"><span class="text-[7px] font-black uppercase px-1.5 py-0.5 border rounded ${obraStyle}">${res.obra.status.descricao}</span><a href="${WEB_APP_BASE}${res.obra._id}/relatorios" target="_blank" class="btn-link-externo"><i class="fas fa-external-link-alt"></i></a></div></div><div class="calendar-grid mb-6"><div class="calendar-header-day">D</div><div class="calendar-header-day">S</div><div class="calendar-header-day">T</div><div class="calendar-header-day">Q</div><div class="calendar-header-day">Q</div><div class="calendar-header-day">S</div><div class="calendar-header-day">S</div>`;
             for (let i = 0; i < primDiaSemana; i++) html += `<div></div>`;
             const todayStr = `${realToday.getFullYear()}-${(realToday.getMonth()+1).toString().padStart(2,'0')}-${realToday.getDate().toString().padStart(2,'0')}`;
             for (let d = 1; d <= diasNoMes; d++) {
@@ -1158,8 +1196,14 @@
         async function openDetails(obraId, nomeObra, dia, mes, ano, reportId) {
             lockScroll();
             const displayDate = `${dia.toString().padStart(2, '0')}/${(mes + 1).toString().padStart(2, '0')}/${ano}`;
+            const obraRef = todasObras.find(o => o._id === obraId);
+            const obraStyle = getObraStatusStyle(obraRef?.status?.descricao || "");
+            
             document.getElementById('side-obra-nome').innerText = nomeObra;
-            document.getElementById('side-obra-link-container').innerHTML = `<a href="${WEB_APP_BASE}${obraId}/relatorios/${reportId}" target="_blank" class="btn-link-externo"><i class="fas fa-external-link-alt"></i></a>`;
+            document.getElementById('side-obra-link-container').innerHTML = `
+                <span class="text-[7px] font-black uppercase px-1.5 py-0.5 border rounded ${obraStyle} mr-2">${obraRef?.status?.descricao || ""}</span>
+                <a href="${WEB_APP_BASE}${obraId}/relatorios/${reportId}" target="_blank" class="btn-link-externo"><i class="fas fa-external-link-alt"></i></a>
+            `;
             document.getElementById('side-data').innerText = displayDate;
             document.getElementById('side-overlay').classList.add('open');
             document.getElementById('side-panel').classList.add('open');
@@ -1204,7 +1248,12 @@
                     let det = await apiCall(`/obras/${obraId}/relatorios/${winner._id}?cb=${Date.now()}`);
                     if (det && !det.error) {
                         reportDetailsCache[winner._id] = det; renderDetailsContent(det);
-                        document.getElementById('side-obra-link-container').innerHTML = `<a href="${WEB_APP_BASE}${obraId}/relatorios/${winner._id}" target="_blank" class="btn-link-externo"><i class="fas fa-external-link-alt"></i></a>`;
+                        const obraRef = todasObras.find(o => o._id === obraId);
+                        const obraStyle = getObraStatusStyle(obraRef?.status?.descricao || "");
+                        document.getElementById('side-obra-link-container').innerHTML = `
+                            <span class="text-[7px] font-black uppercase px-1.5 py-0.5 border rounded ${obraStyle} mr-2">${obraRef?.status?.descricao || ""}</span>
+                            <a href="${WEB_APP_BASE}${obraId}/relatorios/${winner._id}" target="_blank" class="btn-link-externo"><i class="fas fa-external-link-alt"></i></a>
+                        `;
                     }
                 }
                 render();
@@ -1221,7 +1270,6 @@
             html += section('fas fa-tractor', 'Maquinário', det.equipamentos?.length || 0, det.equipamentos?.map(e => `<div class="flex justify-between py-1 border-b"><span>${e.descricao}</span><b>${e.quantidade || 1}</b></div>`).join('') || 'Nenhum equipamento.');
             html += section('fas fa-tasks', 'Serviços Executados', det.atividades?.length || 0, det.atividades?.map(a => `<div class="mb-2 pb-1 border-b"><b>${a.descricao}</b><br><small class="text-green-700 uppercase font-bold">${a.status?.descricao} - ${a.porcentagem}%</small></div>`).join('') || 'Nenhuma atividade.');
             
-            // CORREÇÃO GALERIA DE FOTOS: verifica se há fotos antes de renderizar a div grid
             const fotosConteudo = (det.galeriaDeFotos && det.galeriaDeFotos.length > 0) 
                 ? `<div class="grid grid-cols-2 gap-2">${det.galeriaDeFotos.map(f => `<img src="${f.urlMiniatura || f.url}" class="w-full aspect-square object-cover rounded-xl" loading="lazy">`).join('')}</div>` 
                 : 'Nenhuma foto.';
