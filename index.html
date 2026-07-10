@@ -735,7 +735,7 @@
         async function atualizarListaPendencias(isRefresh = false) {
             const container = document.getElementById('container-texto-whatsapp');
             const refreshIcon = document.getElementById('pendencias-sync-icon');
-            if (!isRefresh) { container.innerText = "Carregando Informações Atualizadas..."; }
+            if (!isRefresh) { container.innerText = "Carregando..."; }
             if (refreshIcon) refreshIcon.classList.add('sync-spinning');
             try {
                 await iniciarSincronizacao(true);
@@ -952,7 +952,7 @@
             if (isSilent) { if(syncIcon) syncIcon.classList.add('sync-spinning'); } 
             else {
                 document.getElementById('loader').style.display = 'block';
-                document.getElementById('global-month-label').innerText = 'CARREGANDO...';
+                document.getElementById('global-month-label').innerText = 'Carregando...';
             }
             const anoAtual = new Date().getFullYear();
             const inicioReq = "2010-01-01";
