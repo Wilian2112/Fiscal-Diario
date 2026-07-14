@@ -735,7 +735,7 @@
         async function atualizarListaPendencias(isRefresh = false) {
             const container = document.getElementById('container-texto-whatsapp');
             const refreshIcon = document.getElementById('pendencias-sync-icon');
-            if (!isRefresh) { container.innerText = "Carregando..."; }
+            if (!isRefresh) { container.innerText = "CARREGANDO..."; }
             if (refreshIcon) refreshIcon.classList.add('sync-spinning');
             try {
                 await iniciarSincronizacao(true);
