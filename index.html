@@ -1,3 +1,5 @@
+--- START OF FILE index.html ---
+
 <!DOCTYPE html>
 <html lang="pt-br">
 
@@ -422,12 +424,25 @@
                 <!-- SELETOR DE ANO -->
                 <div class="flex items-center justify-between bg-white rounded-xl border border-gray-200 p-1">
                     <button id="btn-selector-ano-prev" class="w-10 h-10 flex items-center justify-center text-green-700 hover:bg-gray-50 rounded-lg transition-all"><i class="fas fa-chevron-left"></i></button>
-                    <span id="selector-ano-label" class="text-xs font-black text-gray-700">2024</span>
+                    <span id="selector-ano-label" class="text-xs font-black text-gray-700 cursor-pointer hover:text-green-700 transition-all p-2 rounded-lg hover:bg-gray-50">2024</span>
                     <button id="btn-selector-ano-next" class="w-10 h-10 flex items-center justify-center text-green-700 hover:bg-gray-50 rounded-lg transition-all"><i class="fas fa-chevron-right"></i></button>
                 </div>
             </div>
             <div class="p-4 grid grid-cols-3 gap-2" id="grid-meses-selector">
                 <!-- Meses via JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL SELEÇÃO DE ANOS (NOVO) -->
+    <div id="modal-anos" class="fixed inset-0 z-[170] modal-base flex items-center justify-center p-4 modal-hidden-state bg-slate-900/60 backdrop-blur-md">
+        <div id="modal-anos-content" class="bg-white rounded-[1.5rem] shadow-2xl w-full max-w-[200px] flex flex-col overflow-hidden modal-content-anim modal-scale-hide">
+            <div class="p-4 border-b flex justify-between items-center bg-gray-50">
+                <h2 class="text-[10px] font-black uppercase tracking-tighter text-gray-500">Escolher Ano</h2>
+                <button onclick="fecharModalAnos()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="grid-anos-selector" class="p-4 grid grid-cols-1 gap-1 overflow-y-auto max-h-[40vh]">
+                <!-- Anos via JavaScript -->
             </div>
         </div>
     </div>
@@ -674,6 +689,12 @@
             
             grid.innerHTML = '';
             labelAno.innerText = selectorAnoTemporario;
+            
+            // Ativa o clique no rótulo do ano
+            labelAno.onclick = (e) => {
+                e.stopPropagation();
+                abrirModalAnos();
+            };
 
             const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
             const mesAtualVisualizado = globalViewDate.getMonth();
@@ -724,6 +745,37 @@
 
         function fecharModalMeses() {
             fecharModalAnim('modal-meses', 'modal-meses-content');
+        }
+
+        // FUNÇÕES DO MODAL DE SELEÇÃO DE ANOS (NOVO)
+        function abrirModalAnos() {
+            const container = document.getElementById('grid-anos-selector');
+            container.innerHTML = '';
+            
+            const anoAtual = new Date().getFullYear();
+            const anoInicio = 2010; // Conforme definido no início da sincronização
+            
+            for (let a = anoAtual; a >= anoInicio; a--) {
+                const btn = document.createElement('button');
+                const isSelecionado = (a === selectorAnoTemporario);
+                
+                btn.className = `w-full py-3 rounded-lg text-xs font-black transition-all ${isSelecionado ? 'bg-green-700 text-white shadow-md' : 'text-gray-500 hover:bg-gray-100 hover:text-green-700'}`;
+                btn.innerText = a;
+                btn.onclick = () => selecionarAnoNoModal(a);
+                container.appendChild(btn);
+            }
+            
+            abrirModalAnim('modal-anos', 'modal-anos-content');
+        }
+
+        function selecionarAnoNoModal(ano) {
+            selectorAnoTemporario = ano;
+            fecharModalAnos();
+            renderGridMeses();
+        }
+
+        function fecharModalAnos() {
+            fecharModalAnim('modal-anos', 'modal-anos-content');
         }
 
         // FUNÇÕES DO MODAL DE PERÍODO
@@ -1414,6 +1466,7 @@
             if (event.target.id === 'modal-pendencias') fecharModalPendencias();
             if (event.target.id === 'modal-periodo') fecharModalPeriodo();
             if (event.target.id === 'modal-meses') fecharModalMeses();
+            if (event.target.id === 'modal-anos') fecharModalAnos();
         }
 
         window.onload = () => {
