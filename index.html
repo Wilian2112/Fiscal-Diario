@@ -438,7 +438,7 @@
     <div id="modal-anos" class="fixed inset-0 z-[170] modal-base flex items-center justify-center p-4 modal-hidden-state bg-slate-900/60 backdrop-blur-md">
         <div id="modal-anos-content" class="bg-white rounded-[1.5rem] shadow-2xl w-full max-w-[200px] flex flex-col overflow-hidden modal-content-anim modal-scale-hide">
             <div class="p-4 border-b flex justify-between items-center bg-gray-50">
-                <h2 class="text-[10px] font-black uppercase tracking-tighter text-gray-500">Escolher Ano</h2>
+                <h2 class="text-sm font-black uppercase tracking-tighter text-gray-500">Escolher Ano</h2>
                 <button onclick="fecharModalAnos()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
             </div>
             <div id="grid-anos-selector" class="p-4 grid grid-cols-1 gap-1 overflow-y-auto max-h-[40vh]">
@@ -770,7 +770,8 @@
                 if (periodoInicio && a < periodoInicio.getFullYear()) isAnoBlocked = true;
                 if (periodoFim && a > periodoFim.getFullYear()) isAnoBlocked = true;
 
-                btn.className = `w-full py-3 rounded-lg text-xs font-black transition-all ${isSelecionado ? 'bg-green-700 text-white shadow-md' : 'text-gray-500 hover:bg-gray-100 hover:text-green-700'}`;
+                // AUMENTADO TAMANHO DA ESCRITA PARA text-xl
+                btn.className = `w-full py-4 rounded-lg text-xl font-black transition-all ${isSelecionado ? 'bg-green-700 text-white shadow-md' : 'text-gray-500 hover:bg-gray-100 hover:text-green-700'}`;
                 btn.innerText = a;
 
                 if (isAnoBlocked) {
@@ -1474,6 +1475,14 @@
                 det.ocorrencias.forEach(o => { html += `<div class="p-4 bg-red-50 border border-red-100 rounded-2xl mb-2 text-xs font-bold text-red-700">${o.descricao}</div>`; });
             }
             document.getElementById('side-content').innerHTML = html;
+        }
+
+        function unlockScroll() { 
+            const anyModal = document.querySelector('.modal-visible-state');
+            const anySidePanel = document.getElementById('side-panel').classList.contains('open');
+            if (!anyModal && !anySidePanel) {
+                document.body.style.overflow = ''; 
+            }
         }
 
         function closeDetails() { 
