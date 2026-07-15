@@ -436,12 +436,12 @@
 
     <!-- MODAL SELEÇÃO DE ANOS -->
     <div id="modal-anos" class="fixed inset-0 z-[170] modal-base flex items-center justify-center p-4 modal-hidden-state bg-slate-900/60 backdrop-blur-md">
-        <div id="modal-anos-content" class="bg-white rounded-[1.5rem] shadow-2xl w-full max-w-[200px] flex flex-col overflow-hidden modal-content-anim modal-scale-hide">
+        <div id="modal-anos-content" class="bg-white rounded-[1.5rem] shadow-2xl w-full max-w-xs flex flex-col overflow-hidden modal-content-anim modal-scale-hide">
             <div class="p-4 border-b flex justify-between items-center bg-gray-50">
                 <h2 class="text-sm font-black uppercase tracking-tighter text-gray-500">Escolher Ano</h2>
                 <button onclick="fecharModalAnos()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
             </div>
-            <div id="grid-anos-selector" class="p-4 grid grid-cols-1 gap-1 overflow-y-auto max-h-[40vh]">
+            <div id="grid-anos-selector" class="p-4 grid grid-cols-3 gap-2 overflow-y-auto max-h-[40vh]">
                 <!-- Anos via JavaScript -->
             </div>
         </div>
@@ -635,7 +635,6 @@
 
         function lockScroll() { document.body.style.overflow = 'hidden'; }
         
-        // Sincroniza o scroll de fundo: só libera se nenhum modal ou painel estiver aberto
         function unlockScroll() { 
             const anyModal = document.querySelector('.modal-visible-state');
             const anySidePanel = document.getElementById('side-panel').classList.contains('open');
@@ -648,7 +647,6 @@
             return str ? str.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ' ').trim() : "";
         }
 
-        // Função CSS para o sticker de status
         function getObraStatusStyle(descricao) {
             const desc = normalizeString(descricao);
             if (desc.includes("andamento")) return "text-blue-700 border-blue-200 bg-blue-50";
@@ -682,7 +680,6 @@
             }, 300);
         }
 
-        // FUNÇÕES DO MODAL DE SELEÇÃO RÁPIDA DE MESES/ANOS
         function abrirModalMeses() {
             selectorAnoTemporario = globalViewDate.getFullYear();
             renderGridMeses();
@@ -754,7 +751,6 @@
             fecharModalAnim('modal-meses', 'modal-meses-content');
         }
 
-        // FUNÇÕES DO MODAL DE SELEÇÃO DE ANOS
         function abrirModalAnos() {
             const container = document.getElementById('grid-anos-selector');
             container.innerHTML = '';
@@ -770,8 +766,8 @@
                 if (periodoInicio && a < periodoInicio.getFullYear()) isAnoBlocked = true;
                 if (periodoFim && a > periodoFim.getFullYear()) isAnoBlocked = true;
 
-                // AUMENTADO TAMANHO DA ESCRITA PARA text-xl
-                btn.className = `w-full py-4 rounded-lg text-xl font-black transition-all ${isSelecionado ? 'bg-green-700 text-white shadow-md' : 'text-gray-500 hover:bg-gray-100 hover:text-green-700'}`;
+                // CLASSES IGUALADAS AO MODAL DE MESES (text-[10px], rounded-xl, etc)
+                btn.className = `py-3 rounded-xl text-[10px] font-black uppercase transition-all ${isSelecionado ? 'bg-green-700 text-white shadow-lg' : 'bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-green-700'}`;
                 btn.innerText = a;
 
                 if (isAnoBlocked) {
@@ -798,7 +794,6 @@
             fecharModalAnim('modal-anos', 'modal-anos-content');
         }
 
-        // FUNÇÕES DO MODAL DE PERÍODO
         function abrirModalPeriodo() {
             abrirModalAnim('modal-periodo', 'modal-periodo-content');
         }
@@ -946,7 +941,6 @@
             render();
         }
 
-        // LÓGICA DE PENDÊNCIAS
         function formatarIntervalos(dias, mes, ano) {
             if (dias.length === 0) return "";
             dias.sort((a, b) => a - b);
