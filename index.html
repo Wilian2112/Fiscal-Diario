@@ -1,3 +1,5 @@
+--- START OF FILE index.html ---
+
 <!DOCTYPE html>
 <html lang="pt-br">
 
@@ -409,6 +411,21 @@
         </div>
     </div>
 
+    <!-- MODAL SELEÇÃO RÁPIDA DE MESES -->
+    <div id="modal-meses" class="fixed inset-0 z-[160] modal-base flex items-center justify-center p-4 modal-hidden-state bg-slate-900/40 backdrop-blur-sm">
+        <div id="modal-meses-content" class="bg-white rounded-[1.5rem] shadow-2xl w-full max-w-xs flex flex-col overflow-hidden modal-content-anim modal-scale-hide">
+            <div class="p-4 border-b flex justify-between items-center bg-gray-50">
+                <h2 class="text-sm font-black uppercase tracking-tighter flex items-center gap-2">
+                    <i class="fas fa-calendar-alt text-green-700"></i> Escolher Mês
+                </h2>
+                <button onclick="fecharModalMeses()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="p-4 grid grid-cols-3 gap-2" id="grid-meses-selector">
+                <!-- Meses via JavaScript -->
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL FILTRAR PERÍODO -->
     <div id="modal-periodo" class="fixed inset-0 z-[160] modal-base flex items-center justify-center p-4 modal-hidden-state bg-slate-900/40 backdrop-blur-sm">
         <div id="modal-periodo-content" class="bg-white rounded-[1.5rem] shadow-2xl w-full max-w-sm flex flex-col overflow-hidden modal-content-anim modal-scale-hide">
@@ -555,8 +572,8 @@
                 <button id="global-prev-btn" onclick="changeGlobalMonth(-1)" class="global-nav-btn !py-1.5 !px-4 !rounded-lg bg-white border shadow-sm text-[10px]">
                     <i class="fas fa-chevron-left mr-1.5"></i> Anterior
                 </button>
-                <div class="bg-white px-6 py-1.5 rounded-lg border border-green-100 shadow-sm min-w-[160px] text-center">
-                    <span id="global-month-label" class="text-[11px] font-extrabold uppercase text-green-800 tracking-widest">Janeiro 2024</span>
+                <div onclick="abrirModalMeses()" class="bg-white px-6 py-1.5 rounded-lg border border-green-100 shadow-sm min-w-[160px] text-center cursor-pointer hover:border-green-300 transition-all group active:scale-95">
+                    <span id="global-month-label" class="text-[11px] font-extrabold uppercase text-green-800 tracking-widest group-hover:text-green-600">Janeiro 2024</span>
                 </div>
                 <button id="global-next-btn" onclick="changeGlobalMonth(1)" class="global-nav-btn !py-1.5 !px-4 !rounded-lg bg-white border shadow-sm text-[10px]">
                     Próximo <i class="fas fa-chevron-right ml-1.5"></i>
@@ -634,6 +651,49 @@
                 overlay.classList.remove('modal-visible-state');
                 unlockScroll();
             }, 300);
+        }
+
+        // FUNÇÕES DO MODAL DE SELEÇÃO RÁPIDA DE MESES
+        function abrirModalMeses() {
+            const grid = document.getElementById('grid-meses-selector');
+            grid.innerHTML = '';
+            const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+            const mesAtualIdx = globalViewDate.getMonth();
+            const anoAtual = globalViewDate.getFullYear();
+            const hoje = new Date();
+
+            meses.forEach((nome, idx) => {
+                const btn = document.createElement('button');
+                btn.className = `py-3 rounded-xl text-[10px] font-black uppercase transition-all ${idx === mesAtualIdx ? 'bg-green-700 text-white shadow-lg' : 'bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-green-700'}`;
+                
+                // Validação de limites (não permitir meses futuros ou fora do período selecionado)
+                const dataTesteIni = new Date(anoAtual, idx, 1, 12, 0, 0);
+                const dataTesteFim = new Date(anoAtual, idx + 1, 0, 23, 59, 59);
+                
+                let isBlocked = dataTesteIni > hoje;
+                if (periodoInicio && dataTesteFim < periodoInicio) isBlocked = true;
+                if (periodoFim && dataTesteIni > periodoFim) isBlocked = true;
+
+                if (isBlocked) {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.3';
+                    btn.style.cursor = 'not-allowed';
+                } else {
+                    btn.onclick = () => {
+                        globalViewDate.setMonth(idx);
+                        fecharModalMeses();
+                        updateGlobalLabel();
+                        render();
+                    };
+                }
+                btn.innerText = nome;
+                grid.appendChild(btn);
+            });
+            abrirModalAnim('modal-meses', 'modal-meses-content');
+        }
+
+        function fecharModalMeses() {
+            fecharModalAnim('modal-meses', 'modal-meses-content');
         }
 
         // FUNÇÕES DO MODAL DE PERÍODO
@@ -1336,6 +1396,7 @@
             if (event.target.id === 'modal-selecao-obras') fecharModalSelecao();
             if (event.target.id === 'modal-pendencias') fecharModalPendencias();
             if (event.target.id === 'modal-periodo') fecharModalPeriodo();
+            if (event.target.id === 'modal-meses') fecharModalMeses();
         }
 
         window.onload = () => {
