@@ -347,6 +347,12 @@
         .modal-obra-row.selected {
             background-color: rgba(21, 128, 61, 0.05);
         }
+
+        /* ESTILO PARA OBRA OCULTA NO MODAL */
+        .modal-obra-row.is-hidden {
+            background-color: rgba(239, 68, 68, 0.08) !important;
+            border-color: rgba(239, 68, 68, 0.15);
+        }
     </style>
 </head>
 
@@ -715,24 +721,29 @@
             todasObras
                 .filter(o => o.nome.toLowerCase().includes(modalSearch))
                 .sort((a, b) => {
-                    const aChecked = selectedObraIds.has(a._id);
-                    const bChecked = selectedObraIds.has(b._id);
-                    if (aChecked && !bChecked) return -1;
-                    if (!aChecked && bChecked) return 1;
+                    // ORDENAÇÃO: DESMARCADAS (OCULTAS) NO TOPO
+                    const aHidden = manualOverrides[a._id] === false;
+                    const bHidden = manualOverrides[b._id] === false;
+                    
+                    if (aHidden && !bHidden) return -1;
+                    if (!aHidden && bHidden) return 1;
+                    
+                    // SEGUNDO CRITÉRIO: ORDEM ALFABÉTICA
                     return a.nome.localeCompare(b.nome);
                 })
                 .forEach(obra => {
                     const div = document.createElement('div');
                     const isChecked = selectedObraIds.has(obra._id);
+                    const isHidden = manualOverrides[obra._id] === false;
                     
-                    div.className = `modal-obra-row flex items-center gap-3 py-2.5 px-3 border-b border-gray-50 last:border-0 rounded-lg cursor-pointer ${isChecked ? 'selected' : ''}`;
+                    div.className = `modal-obra-row flex items-center gap-3 py-2.5 px-3 border-b border-gray-50 last:border-0 rounded-lg cursor-pointer ${isHidden ? 'is-hidden' : (isChecked ? 'selected' : '')}`;
                     div.onclick = () => toggleObraSelecao(obra._id);
 
                     div.innerHTML = `
                         <input type="checkbox" class="custom-checkbox pointer-events-none" ${isChecked ? 'checked' : ''}>
                         <div class="flex flex-col truncate">
-                            <span class="text-sm font-semibold ${isChecked ? 'text-slate-800' : 'text-slate-400'} truncate uppercase">${obra.nome}</span>
-                            <span class="text-[9px] font-bold text-gray-400 uppercase">${obra.status.descricao}</span>
+                            <span class="text-sm font-semibold ${isHidden ? 'text-red-900' : (isChecked ? 'text-slate-800' : 'text-slate-400')} truncate uppercase">${obra.nome}</span>
+                            <span class="text-[9px] font-bold ${isHidden ? 'text-red-400' : 'text-gray-400'} uppercase">${obra.status.descricao}</span>
                         </div>
                     `;
                     container.appendChild(div);
@@ -740,8 +751,9 @@
         }
 
         function toggleObraSelecao(id) {
-            const currentlySelected = selectedObraIds.has(id);
-            manualOverrides[id] = !currentlySelected;
+            const isCurrentlySelected = selectedObraIds.has(id);
+            // Toggle manual override
+            manualOverrides[id] = !isCurrentlySelected;
             localStorage.setItem('obras_manual_overrides', JSON.stringify(manualOverrides));
             syncSelectionWithFilters();
             renderListaSelecao();
