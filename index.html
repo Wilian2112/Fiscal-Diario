@@ -634,7 +634,15 @@
         let selectorAnoTemporario = null;
 
         function lockScroll() { document.body.style.overflow = 'hidden'; }
-        function unlockScroll() { document.body.style.overflow = ''; }
+        
+        // Sincroniza o scroll de fundo: só libera se nenhum modal ou painel estiver aberto
+        function unlockScroll() { 
+            const anyModal = document.querySelector('.modal-visible-state');
+            const anySidePanel = document.getElementById('side-panel').classList.contains('open');
+            if (!anyModal && !anySidePanel) {
+                document.body.style.overflow = ''; 
+            }
+        }
 
         function normalizeString(str) {
             return str ? str.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ' ').trim() : "";
@@ -690,7 +698,6 @@
             grid.innerHTML = '';
             labelAno.innerText = selectorAnoTemporario;
             
-            // Ativa o clique no rótulo do ano
             labelAno.onclick = (e) => {
                 e.stopPropagation();
                 abrirModalAnos();
@@ -1469,7 +1476,12 @@
             document.getElementById('side-content').innerHTML = html;
         }
 
-        function closeDetails() { unlockScroll(); document.getElementById('side-overlay').classList.remove('open'); document.getElementById('side-panel').classList.remove('open'); }
+        function closeDetails() { 
+            document.getElementById('side-overlay').classList.remove('open'); 
+            document.getElementById('side-panel').classList.remove('open'); 
+            unlockScroll(); 
+        }
+        
         function startTimer() { if (autoRefreshInterval) clearInterval(autoRefreshInterval); autoRefreshInterval = setInterval(() => iniciarSincronizacao(true), 300000); }
 
         window.onclick = function(event) {
