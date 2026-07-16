@@ -534,9 +534,9 @@
         <div id="side-content" class="flex-grow overflow-y-auto custom-scroll p-8"></div>
     </div>
 
-    <!-- CABEÇALHO ADAPTÁVEL -->
+    <!-- CABEÇALHO ADAPTÁVEL E CENTRALIZADO -->
     <header class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
-        <div class="w-full max-w-[100%] mx-auto px-4 md:px-6 min-h-[5rem] py-4 flex flex-wrap md:flex-nowrap items-center justify-between gap-4">
+        <div class="w-full max-w-[1500px] mx-auto px-4 md:px-6 min-h-[5rem] py-4 flex flex-wrap md:flex-nowrap items-center justify-between gap-4">
             
             <!-- LADO ESQUERDO -->
             <div class="flex items-center gap-4 shrink-0">
@@ -547,14 +547,14 @@
                 </div>
             </div>
 
-            <!-- CENTRO: BARRA DE PESQUISA (AUTO ADAPTÁVEL) -->
+            <!-- CENTRO: BARRA DE PESQUISA (AUTO ADAPTÁVEL E CENTRALIZADA) -->
             <div class="order-3 md:order-2 w-full md:flex-grow max-w-2xl min-w-0 relative mx-0 md:mx-2">
                 <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
                 <input type="text" id="search-input" oninput="handleGlobalSearch()" placeholder="Pesquisar Obra..." class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 pl-11 pr-4 text-xs font-bold outline-none focus:ring-2 focus:ring-green-500/20 focus:bg-white focus:border-green-600 transition-all shadow-inner">
             </div>
 
             <!-- LADO DIREITO: BOTÕES -->
-            <div class="order-2 md:order-3 flex items-center gap-2 md:gap-3 shrink-0 ml-auto">
+            <div class="order-2 md:order-3 flex items-center gap-2 md:gap-3 shrink-0 ml-auto md:ml-0">
                 <div class="relative">
                     <button onclick="toggleStatusDropdown()" class="flex items-center gap-2 px-3 py-3 bg-gray-50 hover:bg-gray-100 text-gray-600 rounded-xl text-[10px] font-black transition-all border border-gray-200 uppercase min-w-[110px] sm:min-w-[150px] justify-between">
                         <span id="current-status-label" class="truncate">Status: Todos</span>
@@ -588,7 +588,7 @@
         </div>
 
         <div class="bg-gray-50 border-t border-gray-200/60 py-4 shadow-inner">
-            <div class="max-w-7xl mx-auto px-4 flex items-center justify-center gap-6">
+            <div class="max-w-[1500px] mx-auto px-4 flex items-center justify-center gap-6">
                 <button id="global-prev-btn" onclick="changeGlobalMonth(-1)" class="global-nav-btn !py-2 !px-6 !rounded-lg bg-white border shadow-sm text-[10px]">
                     <i class="fas fa-chevron-left mr-2"></i> Anterior
                 </button>
@@ -602,7 +602,7 @@
         </div>
     </header>
 
-    <!-- DASHBOARD COM GRID ADAPTÁVEL PARA TELAS GRANDES -->
+    <!-- DASHBOARD COM GRID ADAPTÁVEL -->
     <main class="flex-grow max-w-[98%] mx-auto px-4 py-8 w-full">
         <div id="loader" style="display: none;" class="py-20 text-center">
             <div class="inline-block w-10 h-10 border-4 border-green-700 border-t-transparent rounded-full animate-spin"></div>
@@ -996,12 +996,12 @@
                 if (linhasCsv.length < 1) throw new Error("Planilha vazia");
                 const cabecalho = linhasCsv[0].split(separador).map(c => c.replace(/"/g, '').trim().toLowerCase());
                 const idxEng = cabecalho.findIndex(c => c.includes('eng') || c.includes('nome'));
-                const idxObra = cabecalho.findIndex(c => c.includes('obra'));
+                const idx役者 = cabecalho.findIndex(c => c.includes('obra'));
                 const mapaEngenheiros = {};
                 linhasCsv.slice(1).forEach(linha => {
                     const colunas = linha.split(separador).map(c => c.replace(/"/g, '').trim());
-                    if (colunas[idxEng] && colunas[idxObra]) {
-                        mapaEngenheiros[normalizeString(colunas[idxObra])] = colunas[idxEng];
+                    if (colunas[idxEng] && colunas[idx役者]) {
+                        mapaEngenheiros[normalizeString(colunas[idx役者])] = colunas[idxEng];
                     }
                 });
                 const mesVisivel = globalViewDate.getMonth();
