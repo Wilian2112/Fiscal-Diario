@@ -546,8 +546,8 @@
                 </div>
             </div>
 
-            <!-- BARRA DE PESQUISA (Agora integrada ao fluxo natural do cabeçalho centralizado) -->
-            <div class="flex-grow max-w-lg relative">
+            <!-- BARRA DE PESQUISA (Aumentada para max-w-2xl) -->
+            <div class="flex-grow max-w-2xl relative">
                 <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
                 <input type="text" id="search-input" oninput="handleGlobalSearch()" placeholder="Pesquisar Obra..." class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 pl-11 pr-4 text-xs font-bold outline-none focus:ring-2 focus:ring-green-500/20 focus:bg-white focus:border-green-600 transition-all shadow-inner">
             </div>
@@ -1245,7 +1245,7 @@
                 const limiteIni = new Date(periodoInicio.getFullYear(), periodoInicio.getMonth(), 1, 12, 0, 0);
                 if (new Date(globalViewDate.getFullYear(), globalViewDate.getMonth(), 1, 12, 0, 0) <= limiteIni) blockPrev = true;
             }
-            document.getElementById('global-prev-btn').disabled = blockPrev;
+            document.getElementById('global-next-btn').disabled = blockPrev;
         }
 
         function changeGlobalMonth(offset) {
