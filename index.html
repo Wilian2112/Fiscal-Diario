@@ -532,11 +532,11 @@
         <div id="side-content" class="flex-grow overflow-y-auto custom-scroll p-8"></div>
     </div>
 
-    <!-- CABEÇALHO CENTRALIZADO E COM CAIXA DE PESQUISA GRANDE -->
+    <!-- CABEÇALHO CENTRALIZADO COMO UM BLOCO ÚNICO -->
     <header class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 h-24 flex items-center justify-between gap-4">
+        <div class="max-w-7xl mx-auto px-6 h-24 flex items-center justify-center gap-10">
             
-            <!-- LADO ESQUERDO -->
+            <!-- LOGO -->
             <div class="flex items-center gap-4 shrink-0">
                 <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRmHLLhhzqVAzvECxD7HCqYHK4Znpr3kQvwYg&s" alt="Logo Pacopedra" class="h-12 w-auto object-contain">
                 <div class="hidden md:block h-8 w-px bg-gray-200"></div>
@@ -545,13 +545,13 @@
                 </div>
             </div>
 
-            <!-- CENTRO: BARRA DE PESQUISA GRANDE -->
-            <div class="flex-grow max-w-3xl min-w-[450px] relative mx-4">
+            <!-- PESQUISA GRANDE -->
+            <div class="flex-grow max-w-3xl relative">
                 <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
                 <input type="text" id="search-input" oninput="handleGlobalSearch()" placeholder="Pesquisar Obra..." class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 pl-11 pr-4 text-xs font-bold outline-none focus:ring-2 focus:ring-green-500/20 focus:bg-white focus:border-green-600 transition-all shadow-inner">
             </div>
 
-            <!-- LADO DIREITO: BOTÕES -->
+            <!-- BOTÕES -->
             <div class="flex items-center gap-3 shrink-0">
                 <div class="relative">
                     <button onclick="toggleStatusDropdown()" class="flex items-center gap-2 px-3 py-3 bg-gray-50 hover:bg-gray-100 text-gray-600 rounded-xl text-[10px] font-black transition-all border border-gray-200 uppercase min-w-[120px] sm:min-w-[150px] justify-between">
@@ -585,6 +585,7 @@
             </div>
         </div>
 
+        <!-- SELETOR DE MESES TAMBÉM CENTRALIZADO -->
         <div class="bg-gray-50 border-t border-gray-200/60 py-4 shadow-inner">
             <div class="max-w-7xl mx-auto px-4 flex items-center justify-center gap-6">
                 <button id="global-prev-btn" onclick="changeGlobalMonth(-1)" class="global-nav-btn !py-2 !px-6 !rounded-lg bg-white border shadow-sm text-[10px]">
