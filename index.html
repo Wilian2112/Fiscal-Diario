@@ -532,27 +532,27 @@
         <div id="side-content" class="flex-grow overflow-y-auto custom-scroll p-8"></div>
     </div>
 
-    <!-- CABEÇALHO CORRETAMENTE CENTRALIZADO AO MONITOR -->
+    <!-- CABEÇALHO CENTRALIZADO E AUTO ADAPTÁVEL -->
     <header class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
-        <!-- Container principal do header alinhado com o dashboard (max-w-7xl) -->
-        <div class="max-w-7xl mx-auto px-4 h-24 flex items-center justify-between gap-4">
+        <!-- Container centralizado que segue a largura do monitor -->
+        <div class="max-w-7xl mx-auto px-4 h-24 flex items-center justify-between gap-6">
             
-            <!-- LADO ESQUERDO -->
+            <!-- LOGO E TAG -->
             <div class="flex items-center gap-4 shrink-0">
                 <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRmHLLhhzqVAzvECxD7HCqYHK4Znpr3kQvwYg&s" alt="Logo Pacopedra" class="h-12 w-auto object-contain">
-                <div class="hidden md:block h-8 w-px bg-gray-200"></div>
+                <div class="hidden lg:block h-8 w-px bg-gray-200"></div>
                 <div class="hidden sm:block">
                     <span id="last-update-tag" class="text-[9px] font-black text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-md uppercase tracking-wider block">Sincronizando</span>
                 </div>
             </div>
 
-            <!-- CENTRO: BARRA DE PESQUISA -->
-            <div class="flex-grow max-w-2xl min-w-[400px] relative mx-4">
+            <!-- BARRA DE PESQUISA (Agora integrada ao fluxo natural do cabeçalho centralizado) -->
+            <div class="flex-grow max-w-lg relative">
                 <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
                 <input type="text" id="search-input" oninput="handleGlobalSearch()" placeholder="Pesquisar Obra..." class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 pl-11 pr-4 text-xs font-bold outline-none focus:ring-2 focus:ring-green-500/20 focus:bg-white focus:border-green-600 transition-all shadow-inner">
             </div>
 
-            <!-- LADO DIREITO: BOTÕES -->
+            <!-- BOTÕES DE AÇÃO -->
             <div class="flex items-center gap-3 shrink-0">
                 <div class="relative">
                     <button onclick="toggleStatusDropdown()" class="flex items-center gap-2 px-3 py-3 bg-gray-50 hover:bg-gray-100 text-gray-600 rounded-xl text-[10px] font-black transition-all border border-gray-200 uppercase min-w-[120px] sm:min-w-[150px] justify-between">
@@ -574,7 +574,7 @@
                     <span class="hidden md:inline">Pendências</span> <i class="fas fa-list-ul"></i>
                 </button>
 
-                <div class="h-8 w-px bg-gray-200 mx-2"></div>
+                <div class="h-8 w-px bg-gray-200 mx-1"></div>
 
                 <button onclick="iniciarSincronizacao(true)" title="Atualizar dados" class="flex items-center justify-center w-11 h-11 bg-gray-50 hover:bg-green-50 hover:text-green-700 text-gray-500 rounded-xl transition-all border border-gray-200">
                     <i id="sync-icon-manual" class="fas fa-sync-alt"></i>
@@ -586,7 +586,6 @@
             </div>
         </div>
 
-        <!-- Seletor de Meses também centralizado -->
         <div class="bg-gray-50 border-t border-gray-200/60 py-4 shadow-inner">
             <div class="max-w-7xl mx-auto px-4 flex items-center justify-center gap-6">
                 <button id="global-prev-btn" onclick="changeGlobalMonth(-1)" class="global-nav-btn !py-2 !px-6 !rounded-lg bg-white border shadow-sm text-[10px]">
@@ -1333,7 +1332,7 @@
                 const pA = getPriority(a.obra.status.descricao);
                 const pB = getPriority(b.obra.status.descricao);
                 if (pA !== pB) return pA - pB;
-                return a.obra.nome.localeCompare(b.obra.nome);
+                return a.obra.nome.localeCompare(b.nome);
             });
             const statusLabel = document.getElementById('current-status-label');
             if(statusLabel) statusLabel.innerText = `${selectedStatus === 'todos' ? 'Status: Todos' : selectedStatus} (${filtered.length})`;
