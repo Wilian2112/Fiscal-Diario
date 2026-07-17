@@ -1189,8 +1189,11 @@
         function getStatusConfig(statusObj) {
             const id = parseInt(statusObj?.id);
             const desc = (statusObj?.descricao || "").toLowerCase();
-            if (id === 3 || desc.includes("revisar")) return { label: 'Revisar', css: 'status-revisar', text: 'text-red-600', priority: 3 };
-            if (id === 1 || desc.includes("preenchendo")) return { label: 'Pendente', css: 'status-pendente', text: 'text-amber-600', priority: 2 };
+            // Prioridade 3 (Máxima): Preenchendo deve sempre aparecer primeiro
+            if (id === 1 || desc.includes("preenchendo")) return { label: 'Pendente', css: 'status-pendente', text: 'text-amber-600', priority: 3 };
+            // Prioridade 2: Revisar
+            if (id === 3 || desc.includes("revisar")) return { label: 'Revisar', css: 'status-revisar', text: 'text-red-600', priority: 2 };
+            // Prioridade 1: Aprovado
             if (id === 2 || desc.includes("aprovado")) return { label: 'Aprovado', css: 'status-aprovado', text: 'text-emerald-700', priority: 1 };
             return { label: '', css: 'status-vazio', text: 'text-gray-300', priority: 0 };
         }
