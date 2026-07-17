@@ -841,6 +841,9 @@
             document.getElementById('input-data-fim').value = '';
             document.getElementById('btn-periodo-label').innerText = 'Período';
             
+            // ACRESCENTADO: Reseta a visualização para o mês e ano atuais
+            globalViewDate = new Date(now.getFullYear(), now.getMonth(), 1, 12, 0, 0);
+
             const btnClear = document.getElementById('btn-periodo-clear');
             if(btnClear) btnClear.classList.add('hidden');
 
@@ -1295,8 +1298,7 @@
                 activeReportIds.forEach(rId => {
                     syncPromises.push((async () => {
                         let det = reportDetailsCache[rId] || await apiCall(`/obras/${res.obra._id}/relatorios/${rId}`);
-                        if (det && !det.error) {
-                            reportDetailsCache[rId] = det;
+                        if (det && !det.error) { reportDetailsCache[rId] = det;
                             const hasOccurrences = det.ocorrencias?.length > 0;
                             for (const dateKey in relsMap) {
                                 if (relsMap[dateKey]._id === rId) {
