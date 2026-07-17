@@ -532,7 +532,7 @@
         <div id="side-content" class="flex-grow overflow-y-auto custom-scroll p-8"></div>
     </div>
 
-    <!-- CABEÇALHO CORRIGIDO: PESQUISA MENOR E MAIS PRÓXIMO -->
+    <!-- CABEÇALHO COM CAMPO DE PESQUISA EQUILIBRADO -->
     <header class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
         <div class="max-w-7xl mx-auto px-6 h-24 flex items-center justify-between gap-6">
             
@@ -545,8 +545,8 @@
                 </div>
             </div>
 
-            <!-- CENTRO: BARRA DE PESQUISA (DIMINUÍDA) -->
-            <div class="flex-grow max-w-md relative mx-2">
+            <!-- CENTRO: BARRA DE PESQUISA (TAMANHO AJUSTADO PARA EXIBIR O TEXTO) -->
+            <div class="flex-grow max-w-xl min-w-[320px] relative mx-4">
                 <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
                 <input type="text" id="search-input" oninput="handleGlobalSearch()" placeholder="Pesquisar Obra..." class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 pl-11 pr-4 text-xs font-bold outline-none focus:ring-2 focus:ring-green-500/20 focus:bg-white focus:border-green-600 transition-all shadow-inner">
             </div>
