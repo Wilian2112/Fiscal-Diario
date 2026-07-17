@@ -532,9 +532,9 @@
         <div id="side-content" class="flex-grow overflow-y-auto custom-scroll p-8"></div>
     </div>
 
-    <!-- CABEÇALHO COM CAMPO DE PESQUISA CORRIGIDO -->
+    <!-- CABEÇALHO CORRIGIDO: PESQUISA MENOR E MAIS PRÓXIMO -->
     <header class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
-        <div class="max-w-[98%] mx-auto px-6 h-24 flex items-center justify-between gap-4">
+        <div class="max-w-7xl mx-auto px-6 h-24 flex items-center justify-between gap-6">
             
             <!-- LADO ESQUERDO -->
             <div class="flex items-center gap-4 shrink-0">
@@ -545,8 +545,8 @@
                 </div>
             </div>
 
-            <!-- CENTRO: BARRA DE PESQUISA -->
-            <div class="flex-grow max-w-2xl min-w-[450px] relative mx-2">
+            <!-- CENTRO: BARRA DE PESQUISA (DIMINUÍDA) -->
+            <div class="flex-grow max-w-md relative mx-2">
                 <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
                 <input type="text" id="search-input" oninput="handleGlobalSearch()" placeholder="Pesquisar Obra..." class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 pl-11 pr-4 text-xs font-bold outline-none focus:ring-2 focus:ring-green-500/20 focus:bg-white focus:border-green-600 transition-all shadow-inner">
             </div>
@@ -766,7 +766,6 @@
                 if (periodoInicio && a < periodoInicio.getFullYear()) isAnoBlocked = true;
                 if (periodoFim && a > periodoFim.getFullYear()) isAnoBlocked = true;
 
-                // CLASSES IGUALADAS AO MODAL DE MESES (text-[10px], rounded-xl, etc)
                 btn.className = `py-3 rounded-xl text-[10px] font-black uppercase transition-all ${isSelecionado ? 'bg-green-700 text-white shadow-lg' : 'bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-green-700'}`;
                 btn.innerText = a;
 
@@ -841,7 +840,6 @@
             document.getElementById('input-data-fim').value = '';
             document.getElementById('btn-periodo-label').innerText = 'Período';
             
-            // ACRESCENTADO: Reseta a visualização para o mês e ano atuais
             globalViewDate = new Date(now.getFullYear(), now.getMonth(), 1, 12, 0, 0);
 
             const btnClear = document.getElementById('btn-periodo-clear');
@@ -1189,11 +1187,8 @@
         function getStatusConfig(statusObj) {
             const id = parseInt(statusObj?.id);
             const desc = (statusObj?.descricao || "").toLowerCase();
-            // Prioridade 3 (Máxima): Preenchendo deve sempre aparecer primeiro
             if (id === 1 || desc.includes("preenchendo")) return { label: 'Pendente', css: 'status-pendente', text: 'text-amber-600', priority: 3 };
-            // Prioridade 2: Revisar
             if (id === 3 || desc.includes("revisar")) return { label: 'Revisar', css: 'status-revisar', text: 'text-red-600', priority: 2 };
-            // Prioridade 1: Aprovado
             if (id === 2 || desc.includes("aprovado")) return { label: 'Aprovado', css: 'status-aprovado', text: 'text-emerald-700', priority: 1 };
             return { label: '', css: 'status-vazio', text: 'text-gray-300', priority: 0 };
         }
@@ -1484,14 +1479,6 @@
                 det.ocorrencias.forEach(o => { html += `<div class="p-4 bg-red-50 border border-red-100 rounded-2xl mb-2 text-xs font-bold text-red-700">${o.descricao}</div>`; });
             }
             document.getElementById('side-content').innerHTML = html;
-        }
-
-        function unlockScroll() { 
-            const anyModal = document.querySelector('.modal-visible-state');
-            const anySidePanel = document.getElementById('side-panel').classList.contains('open');
-            if (!anyModal && !anySidePanel) {
-                document.body.style.overflow = ''; 
-            }
         }
 
         function closeDetails() { 
