@@ -532,9 +532,9 @@
         <div id="side-content" class="flex-grow overflow-y-auto custom-scroll p-8"></div>
     </div>
 
-    <!-- CABEÇALHO COM CAMPO DE PESQUISA EQUILIBRADO -->
+    <!-- CABEÇALHO COM DISTÂNCIA SIMÉTRICA NAS BORDAS -->
     <header class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
-        <div class="max-w-7xl mx-auto px-6 h-24 flex items-center justify-between gap-6">
+        <div class="max-w-7xl mx-auto px-8 h-24 flex items-center justify-between gap-6">
             
             <!-- LADO ESQUERDO -->
             <div class="flex items-center gap-4 shrink-0">
@@ -545,8 +545,8 @@
                 </div>
             </div>
 
-            <!-- CENTRO: BARRA DE PESQUISA (TAMANHO AJUSTADO PARA EXIBIR O TEXTO) -->
-            <div class="flex-grow max-w-xl min-w-[320px] relative mx-4">
+            <!-- CENTRO: BARRA DE PESQUISA EQUILIBRADA -->
+            <div class="flex-grow max-w-xl min-w-[320px] relative">
                 <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
                 <input type="text" id="search-input" oninput="handleGlobalSearch()" placeholder="Pesquisar Obra..." class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 pl-11 pr-4 text-xs font-bold outline-none focus:ring-2 focus:ring-green-500/20 focus:bg-white focus:border-green-600 transition-all shadow-inner">
             </div>
@@ -588,7 +588,7 @@
         </div>
 
         <div class="bg-gray-50 border-t border-gray-200/60 py-4 shadow-inner">
-            <div class="max-w-7xl mx-auto px-4 flex items-center justify-center gap-6">
+            <div class="max-w-7xl mx-auto px-8 flex items-center justify-center gap-6">
                 <button id="global-prev-btn" onclick="changeGlobalMonth(-1)" class="global-nav-btn !py-2 !px-6 !rounded-lg bg-white border shadow-sm text-[10px]">
                     <i class="fas fa-chevron-left mr-2"></i> Anterior
                 </button>
@@ -602,7 +602,7 @@
         </div>
     </header>
 
-    <main class="flex-grow max-w-7xl mx-auto px-4 py-8 w-full">
+    <main class="flex-grow max-w-7xl mx-auto px-8 py-8 w-full">
         <div id="loader" style="display: none;" class="py-20 text-center">
             <div class="inline-block w-10 h-10 border-4 border-green-700 border-t-transparent rounded-full animate-spin"></div>
             <p class="text-gray-400 font-black text-[9px] mt-4 uppercase tracking-widest">Sincronizando dados Pacopedra...</p>
