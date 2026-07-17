@@ -1,3 +1,5 @@
+--- START OF FILE index.html ---
+
 <!DOCTYPE html>
 <html lang="pt-br">
 
@@ -34,11 +36,6 @@
     </script>
 
     <style>
-        /* PREVENIR PULO DA TELA AO ABRIR MODAL (RESERVA ESPAÇO DO SCROLL) */
-        html {
-            scrollbar-gutter: stable;
-        }
-
         /* REMOVER CONTORNO AZUL DE FOCO E SELEÇÃO */
         * {
             outline: none !important;
@@ -1370,7 +1367,9 @@
                     }
                 }
             });
-            let html = `<div class="bg-white p-7 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col h-full"><div class="flex items-center justify-between mb-8"><h3 title="${res.obra.nome}" class="font-black text-sm text-gray-800 truncate uppercase tracking-tighter w-4/5 cursor-help">${res.obra.nome}</h3><div class="flex items-center gap-2 shrink-0"><span class="text-[9px] font-black uppercase px-2 py-1 border rounded-md ${obraStyle}">${res.obra.status.descricao}</span><a href="${WEB_APP_BASE}${res.obra._id}/relatorios" target="_blank" class="btn-link-externo"><i class="fas fa-external-link-alt"></i></a></div></div><div class="calendar-grid mb-6"><div class="calendar-header-day">D</div><div class="calendar-header-day">S</div><div class="calendar-header-day">T</div><div class="calendar-header-day">Q</div><div class="calendar-header-day">Q</div><div class="calendar-header-day">S</div><div class="calendar-header-day">S</div>`;
+            let html = `<div class="bg-white p-7 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col h-full"><div class="flex items-center justify-between mb-8">
+            <a href="https://web.diariodeobra.app/#/app/obras/${res.obra._id}/informacoes" target="_blank" title="${res.obra.nome}" class="font-black text-sm text-gray-800 truncate uppercase tracking-tighter w-4/5 cursor-pointer hover:text-green-700 transition-all">${res.obra.nome}</a>
+            <div class="flex items-center gap-2 shrink-0"><span class="text-[9px] font-black uppercase px-2 py-1 border rounded-md ${obraStyle}">${res.obra.status.descricao}</span><a href="${WEB_APP_BASE}${res.obra._id}/relatorios" target="_blank" class="btn-link-externo"><i class="fas fa-external-link-alt"></i></a></div></div><div class="calendar-grid mb-6"><div class="calendar-header-day">D</div><div class="calendar-header-day">S</div><div class="calendar-header-day">T</div><div class="calendar-header-day">Q</div><div class="calendar-header-day">Q</div><div class="calendar-header-day">S</div><div class="calendar-header-day">S</div>`;
             for (let i = 0; i < primDiaSemana; i++) html += `<div></div>`;
             const todayStr = `${realToday.getFullYear()}-${(realToday.getMonth()+1).toString().padStart(2,'0')}-${realToday.getDate().toString().padStart(2,'0')}`;
             for (let d = 1; d <= diasNoMes; d++) {
@@ -1515,5 +1514,4 @@
         };
     </script>
 </body>
-
 </html>
