@@ -1,3 +1,5 @@
+--- START OF FILE index.html ---
+
 <!DOCTYPE html>
 <html lang="pt-br">
 
@@ -545,8 +547,8 @@
                 </div>
             </div>
 
-            <!-- CENTRO: BARRA DE PESQUISA (DIMINUÍDA) -->
-            <div class="flex-grow max-w-md relative mx-2">
+            <!-- CENTRO: BARRA DE PESQUISA (ALINHAMENTO MANTIDO COM LARGURA MAIOR) -->
+            <div class="flex-grow max-w-2xl relative mx-2">
                 <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
                 <input type="text" id="search-input" oninput="handleGlobalSearch()" placeholder="Pesquisar Obra..." class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 pl-11 pr-4 text-xs font-bold outline-none focus:ring-2 focus:ring-green-500/20 focus:bg-white focus:border-green-600 transition-all shadow-inner">
             </div>
@@ -611,6 +613,7 @@
     </main>
 
     <script>
+        // Restante do script permanece idêntico...
         const API_ENDPOINT = "https://apiexterna.diariodeobra.app/v1";
         const WEB_APP_BASE = "https://web.diariodeobra.app/#/app/obras/";
         const LINK_PLANILHA_CSV = "https://docs.google.com/spreadsheets/d/1TO_r3DB92WKXOOkrMnjxj-imROFvQ12WEvE98Tdtm6s/export?format=csv&gid=0";
@@ -1471,47 +1474,4 @@
             html += section('fas fa-tractor', 'Maquinário', det.equipamentos?.length || 0, det.equipamentos?.map(e => `<div class="flex justify-between py-1 border-b"><span>${e.descricao}</span><b>${e.quantidade || 1}</b></div>`).join('') || 'Nenhum equipamento.');
             html += section('fas fa-tasks', 'Serviços Executados', det.atividades?.length || 0, det.atividades?.map(a => `<div class="mb-2 pb-1 border-b"><b>${a.descricao}</b><br><small class="text-green-700 uppercase font-bold">${a.status?.descricao} - ${a.porcentagem}%</small></div>`).join('') || 'Nenhuma atividade.');
             const fotosConteudo = (det.galeriaDeFotos && det.galeriaDeFotos.length > 0) 
-                ? `<div class="grid grid-cols-2 gap-2">${det.galeriaDeFotos.map(f => `<img src="${f.urlMiniatura || f.url}" class="w-full aspect-square object-cover rounded-xl" loading="lazy">`).join('')}</div>` 
-                : 'Nenhuma foto.';
-            html += section('fas fa-camera', 'Galeria de Fotos', det.galeriaDeFotos?.length || 0, fotosConteudo);
-            if (det.ocorrencias?.length > 0) {
-                html += `<div class="mt-6 text-[9px] font-black text-red-500 uppercase tracking-widest mb-3">Ocorrências</div>`;
-                det.ocorrencias.forEach(o => { html += `<div class="p-4 bg-red-50 border border-red-100 rounded-2xl mb-2 text-xs font-bold text-red-700">${o.descricao}</div>`; });
-            }
-            document.getElementById('side-content').innerHTML = html;
-        }
-
-        function closeDetails() { 
-            document.getElementById('side-overlay').classList.remove('open'); 
-            document.getElementById('side-panel').classList.remove('open'); 
-            unlockScroll(); 
-        }
-        
-        function startTimer() { if (autoRefreshInterval) clearInterval(autoRefreshInterval); autoRefreshInterval = setInterval(() => iniciarSincronizacao(true), 300000); }
-
-        window.onclick = function(event) {
-            if (!event.target.closest('.relative')) { const drop = document.getElementById('status-dropdown'); if(drop) drop.classList.remove('open'); }
-            if (event.target.id === 'modal-selecao-obras') fecharModalSelecao();
-            if (event.target.id === 'modal-pendencias') fecharModalPendencias();
-            if (event.target.id === 'modal-periodo') fecharModalPeriodo();
-            if (event.target.id === 'modal-meses') fecharModalMeses();
-            if (event.target.id === 'modal-anos') fecharModalAnos();
-        }
-
-        window.onload = () => {
-            lockScroll();
-            const overlay = document.getElementById('login-overlay');
-            const content = document.getElementById('login-content');
-            overlay.classList.add('modal-visible-state');
-            overlay.classList.remove('modal-hidden-state');
-            setTimeout(() => {
-                content.classList.add('modal-scale-show');
-                content.classList.remove('modal-scale-hide');
-            }, 100);
-            document.getElementById('popup-token').addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') { e.preventDefault(); realizarLogin(); }
-            });
-        };
-    </script>
-</body>
-</html>
+                ? `<div class="grid grid-cols-2 gap-2">${det.galeriaDeFotos.map(f => `<img src="${f.urlMiniatura || f.url}" class="w-full aspect-square object-cover rounded-xl" loading="lazy">`).join('')}</div>`
