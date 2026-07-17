@@ -532,11 +532,11 @@
         <div id="side-content" class="flex-grow overflow-y-auto custom-scroll p-8"></div>
     </div>
 
-    <!-- CABEÇALHO REORGANIZADO: SEM SOBREPOSIÇÃO E SEM QUEBRA DE LINHA -->
+    <!-- CABEÇALHO REORGANIZADO -->
     <header class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
         <div class="max-w-[1600px] mx-auto px-4 h-24 flex items-center justify-between gap-4">
             
-            <!-- LADO ESQUERDO: Logo e Status de Sincronização -->
+            <!-- LADO ESQUERDO: Logo e Status -->
             <div class="flex items-center gap-4 shrink-0 min-w-fit">
                 <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRmHLLhhzqVAzvECxD7HCqYHK4Znpr3kQvwYg&s" alt="Logo Pacopedra" class="h-12 w-auto object-contain shrink-0">
                 <div class="hidden lg:block h-8 w-px bg-gray-200"></div>
@@ -545,7 +545,7 @@
                 </div>
             </div>
 
-            <!-- CENTRO: BARRA DE PESQUISA (Flexível e Centralizada) -->
+            <!-- CENTRO: BARRA DE PESQUISA -->
             <div class="flex-1 flex justify-center px-4 min-w-0">
                 <div class="w-full max-w-xl relative">
                     <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
@@ -553,13 +553,14 @@
                 </div>
             </div>
 
-            <!-- LADO DIREITO: BOTÕES DE AÇÃO (Não encolhem e não quebram) -->
+            <!-- LADO DIREITO: BOTÕES DE AÇÃO -->
             <div class="flex items-center gap-2 shrink-0 min-w-fit">
                 <div class="relative whitespace-nowrap">
                     <button onclick="toggleStatusDropdown()" class="flex items-center gap-2 px-3 py-3 bg-gray-50 hover:bg-gray-100 text-gray-600 rounded-xl text-[10px] font-black transition-all border border-gray-200 uppercase min-w-[140px] justify-between">
                         <span id="current-status-label" class="truncate">Status: Todos</span>
                         <i class="fas fa-chevron-down text-green-700 shrink-0"></i>
                     </button>
+                    <!-- LISTA DE STATUS - INTEGRADA -->
                     <div id="status-dropdown" class="status-dropdown"></div>
                 </div>
 
@@ -589,7 +590,6 @@
             </div>
         </div>
 
-        <!-- BARRA DE NAVEGAÇÃO DE MÊS -->
         <div class="bg-gray-50 border-t border-gray-200/60 py-4 shadow-inner">
             <div class="max-w-7xl mx-auto px-4 flex items-center justify-center gap-6">
                 <button id="global-prev-btn" onclick="changeGlobalMonth(-1)" class="global-nav-btn !py-2 !px-6 !rounded-lg bg-white border shadow-sm text-[10px]">
@@ -877,6 +877,10 @@
             render();
         }
 
+        function toggleStatusDropdown() {
+            document.getElementById('status-dropdown').classList.toggle('open');
+        }
+
         function abrirModalSelecao() {
             abrirModalAnim('modal-selecao-obras', 'modal-selecao-content');
             renderListaSelecao();
@@ -1134,10 +1138,6 @@
             fecharModalAnim('modal-pendencias', 'modal-pendencias-content');
         }
 
-        function toggleStatusDropdown() {
-            document.getElementById('status-dropdown').classList.toggle('open');
-        }
-
         async function realizarLogin() {
             const input = document.getElementById('popup-token');
             const errorMsg = document.getElementById('login-error');
@@ -1218,6 +1218,8 @@
             const inicioReq = "2010-01-01";
             const fimReq = `${anoAtual}-12-31`;
             const responseObras = await apiCall('/obras');
+            
+            // POPULAR LISTA DE STATUS - CÓDIGO QUE VOCÊ PEDIU
             if (Array.isArray(responseObras)) {
                 todasObras = responseObras;
                 const dropdown = document.getElementById('status-dropdown');
@@ -1228,6 +1230,7 @@
                 });
                 syncSelectionWithFilters();
             }
+
             const results = await Promise.all(todasObras.map(async (obra) => {
                 const relsList = await apiCall(`/obras/${obra._id}/relatorios?dataInicio=${inicioReq}&dataFim=${fimReq}&limite=1000`);
                 return { obra, relsMes: Array.isArray(relsList) ? relsList : [] };
