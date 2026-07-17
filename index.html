@@ -532,12 +532,12 @@
         <div id="side-content" class="flex-grow overflow-y-auto custom-scroll p-8"></div>
     </div>
 
-    <!-- CABEÇALHO COM DISTÂNCIA SIMÉTRICA NAS BORDAS (px-4) -->
+    <!-- CABEÇALHO CORRIGIDO: PESQUISA MENOR E MAIS PRÓXIMO -->
     <header class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 h-24 flex items-center justify-between gap-4">
+        <div class="max-w-7xl mx-auto px-6 h-24 flex items-center justify-between gap-6">
             
-            <!-- LADO ESQUERDO: LOGO E TAG PROXIMOS -->
-            <div class="flex items-center gap-3 shrink-0">
+            <!-- LADO ESQUERDO -->
+            <div class="flex items-center gap-4 shrink-0">
                 <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRmHLLhhzqVAzvECxD7HCqYHK4Znpr3kQvwYg&s" alt="Logo Pacopedra" class="h-12 w-auto object-contain">
                 <div class="hidden md:block h-8 w-px bg-gray-200"></div>
                 <div class="hidden sm:block">
@@ -545,8 +545,8 @@
                 </div>
             </div>
 
-            <!-- CENTRO: BARRA DE PESQUISA EQUILIBRADA -->
-            <div class="flex-grow max-w-xl min-w-[320px] relative mx-2">
+            <!-- CENTRO: BARRA DE PESQUISA (DIMINUÍDA) -->
+            <div class="flex-grow max-w-md relative mx-2">
                 <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
                 <input type="text" id="search-input" oninput="handleGlobalSearch()" placeholder="Pesquisar Obra..." class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 pl-11 pr-4 text-xs font-bold outline-none focus:ring-2 focus:ring-green-500/20 focus:bg-white focus:border-green-600 transition-all shadow-inner">
             </div>
@@ -602,7 +602,6 @@
         </div>
     </header>
 
-    <!-- MAIN COM MESMO PADDING px-4 -->
     <main class="flex-grow max-w-7xl mx-auto px-4 py-8 w-full">
         <div id="loader" style="display: none;" class="py-20 text-center">
             <div class="inline-block w-10 h-10 border-4 border-green-700 border-t-transparent rounded-full animate-spin"></div>
