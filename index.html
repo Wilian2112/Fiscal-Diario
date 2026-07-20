@@ -253,20 +253,20 @@
             filter: grayscale(1);
         }
 
-        /* MODAL DE STATUS REDUZIDO */
+        /* DROPDOWN DE STATUS */
         .status-dropdown {
             display: none;
             position: absolute;
             top: 110%;
             right: 0;
-            width: 190px; /* Reduzido de 220px */
+            width: 190px;
             background: white;
             border: 1px solid #e2e8f0;
             border-radius: 14px;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
             z-index: 100;
-            padding: 6px; /* Reduzido de 8px */
-            max-height: 230px; /* Reduzido de 280px */
+            padding: 6px;
+            max-height: 230px;
             overflow-y: auto;
         }
 
@@ -279,8 +279,8 @@
         .status-option {
             width: 100%;
             text-align: left;
-            padding: 9px 12px; /* Reduzido de 12px 14px */
-            font-size: 9.5px; /* Reduzido levemente */
+            padding: 9px 12px;
+            font-size: 9.5px;
             font-weight: 800;
             text-transform: uppercase;
             border-radius: 8px;
@@ -539,7 +539,7 @@
         <div id="side-content" class="flex-grow overflow-y-auto custom-scroll p-8"></div>
     </div>
 
-    <!-- CABEÇALHO -->
+    <!-- CABEÇALHO ATUALIZADO -->
     <header class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
         <div class="max-w-7xl mx-auto px-6 h-24 flex items-center justify-between gap-6">
             
@@ -552,8 +552,8 @@
                 </div>
             </div>
 
-            <!-- CENTRO: BARRA DE PESQUISA -->
-            <div class="flex-grow max-w-md relative mx-2">
+            <!-- CENTRO: BARRA DE PESQUISA (AMPLIADA) -->
+            <div class="flex-grow max-w-2xl relative mx-2">
                 <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
                 <input type="text" id="search-input" oninput="handleGlobalSearch()" placeholder="Pesquisar Obra..." class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 pl-11 pr-4 text-xs font-bold outline-none focus:ring-2 focus:ring-green-500/20 focus:bg-white focus:border-green-600 transition-all shadow-inner">
             </div>
@@ -565,7 +565,6 @@
                         <span id="current-status-label" class="truncate uppercase">Status: Todos</span>
                         <i class="fas fa-chevron-down text-green-700"></i>
                     </button>
-                    <!-- DROPDOWN DE STATUS -->
                     <div id="status-dropdown" class="status-dropdown"></div>
                 </div>
 
@@ -1225,8 +1224,6 @@
             const responseObras = await apiCall('/obras');
             if (Array.isArray(responseObras)) {
                 todasObras = responseObras;
-
-                // PREENCHIMENTO DA LISTA DE STATUS
                 const dropdown = document.getElementById('status-dropdown');
                 dropdown.innerHTML = `<button onclick="filterByStatus('todos')" class="status-option">Todos os Status</button>`;
                 const statusUnicos = [...new Set(todasObras.map(o => o.status.descricao))].sort();
