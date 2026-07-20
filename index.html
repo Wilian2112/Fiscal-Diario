@@ -253,7 +253,7 @@
             filter: grayscale(1);
         }
 
-        /* DROPDOWN DE STATUS */
+        /* MODAL DE STATUS REDUZIDO */
         .status-dropdown {
             display: none;
             position: absolute;
@@ -539,9 +539,9 @@
         <div id="side-content" class="flex-grow overflow-y-auto custom-scroll p-8"></div>
     </div>
 
-    <!-- CABEÇALHO ATUALIZADO -->
+    <!-- CABEÇALHO ATUALIZADO: SIMETRIA E LARGURA -->
     <header class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
-        <div class="max-w-7xl mx-auto px-6 h-24 flex items-center justify-between gap-6">
+        <div class="max-w-7xl mx-auto px-10 h-24 flex items-center justify-between gap-8">
             
             <!-- LADO ESQUERDO -->
             <div class="flex items-center gap-4 shrink-0">
@@ -552,10 +552,10 @@
                 </div>
             </div>
 
-            <!-- CENTRO: BARRA DE PESQUISA (AMPLIADA) -->
-            <div class="flex-grow max-w-2xl relative mx-2">
+            <!-- CENTRO: BARRA DE PESQUISA (AMPLIADA E EQUILIBRADA) -->
+            <div class="flex-grow max-w-3xl relative mx-6">
                 <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
-                <input type="text" id="search-input" oninput="handleGlobalSearch()" placeholder="Pesquisar Obra..." class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 pl-11 pr-4 text-xs font-bold outline-none focus:ring-2 focus:ring-green-500/20 focus:bg-white focus:border-green-600 transition-all shadow-inner">
+                <input type="text" id="search-input" oninput="handleGlobalSearch()" placeholder="Pesquisar Obra..." class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3.5 pl-11 pr-4 text-xs font-bold outline-none focus:ring-2 focus:ring-green-500/20 focus:bg-white focus:border-green-600 transition-all shadow-inner">
             </div>
 
             <!-- LADO DIREITO: BOTÕES -->
