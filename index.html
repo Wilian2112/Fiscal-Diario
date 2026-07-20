@@ -253,7 +253,7 @@
             filter: grayscale(1);
         }
 
-        /* MODAL DE STATUS REDUZIDO */
+        /* DROPDOWN DE STATUS */
         .status-dropdown {
             display: none;
             position: absolute;
@@ -539,29 +539,29 @@
         <div id="side-content" class="flex-grow overflow-y-auto custom-scroll p-8"></div>
     </div>
 
-    <!-- CABEÇALHO ATUALIZADO: SIMETRIA E LARGURA -->
+    <!-- CABEÇALHO CORRIGIDO: COMPONENTES LATERAIS SHRINK-0 E PESQUISA FLEX-1 MIN-W -->
     <header class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
-        <div class="max-w-7xl mx-auto px-10 h-24 flex items-center justify-between gap-8">
+        <div class="max-w-[1600px] mx-auto px-6 lg:px-12 h-24 flex items-center justify-between gap-6">
             
-            <!-- LADO ESQUERDO -->
+            <!-- LADO ESQUERDO: FIXO -->
             <div class="flex items-center gap-4 shrink-0">
                 <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRmHLLhhzqVAzvECxD7HCqYHK4Znpr3kQvwYg&s" alt="Logo Pacopedra" class="h-12 w-auto object-contain">
-                <div class="hidden md:block h-8 w-px bg-gray-200"></div>
-                <div class="hidden sm:block">
-                    <span id="last-update-tag" class="text-[9px] font-black text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-md uppercase tracking-wider block">Sincronizando</span>
+                <div class="hidden lg:block h-8 w-px bg-gray-200"></div>
+                <div class="hidden sm:block min-w-[120px]">
+                    <span id="last-update-tag" class="text-[9px] font-black text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-md uppercase tracking-wider block text-center">Sincronizando</span>
                 </div>
             </div>
 
-            <!-- CENTRO: BARRA DE PESQUISA (AMPLIADA E EQUILIBRADA) -->
-            <div class="flex-grow max-w-3xl relative mx-6">
+            <!-- CENTRO: BARRA DE PESQUISA (GARANTE VISIBILIDADE) -->
+            <div class="flex-1 min-w-[350px] max-w-2xl relative">
                 <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
                 <input type="text" id="search-input" oninput="handleGlobalSearch()" placeholder="Pesquisar Obra..." class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3.5 pl-11 pr-4 text-xs font-bold outline-none focus:ring-2 focus:ring-green-500/20 focus:bg-white focus:border-green-600 transition-all shadow-inner">
             </div>
 
-            <!-- LADO DIREITO: BOTÕES -->
+            <!-- LADO DIREITO: BOTÕES FIXOS -->
             <div class="flex items-center gap-3 shrink-0">
                 <div class="relative">
-                    <button onclick="toggleStatusDropdown()" class="flex items-center gap-2 px-3 py-3 bg-gray-50 hover:bg-gray-100 text-gray-600 rounded-xl text-[10px] font-black transition-all border border-gray-200 uppercase min-w-[120px] sm:min-w-[150px] justify-between">
+                    <button onclick="toggleStatusDropdown()" class="flex items-center gap-2 px-3 py-3 bg-gray-50 hover:bg-gray-100 text-gray-600 rounded-xl text-[10px] font-black transition-all border border-gray-200 uppercase min-w-[140px] justify-between">
                         <span id="current-status-label" class="truncate uppercase">Status: Todos</span>
                         <i class="fas fa-chevron-down text-green-700"></i>
                     </button>
@@ -569,20 +569,20 @@
                 </div>
 
                 <button onclick="abrirModalSelecao()" class="px-3 py-3 bg-white border border-gray-200 rounded-xl text-[10px] font-black hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center gap-2 text-gray-600 uppercase">
-                    <i class="fas fa-filter text-green-700"></i> <span class="hidden md:inline">Obras</span><span id="hidden-count-tag" class="text-red-600 ml-1 hidden"></span>
+                    <i class="fas fa-filter text-green-700"></i> <span class="hidden xl:inline">Obras</span><span id="hidden-count-tag" class="text-red-600 ml-1 hidden"></span>
                 </button>
 
                 <button onclick="abrirModalPeriodo()" class="px-3 py-3 bg-white border border-gray-200 rounded-xl text-[10px] font-black hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center gap-2 text-gray-600 uppercase">
                     <i class="fas fa-calendar-alt text-green-700"></i> 
-                    <span id="btn-periodo-label" class="hidden md:inline">Período</span>
+                    <span id="btn-periodo-label" class="hidden xl:inline">Período</span>
                     <span id="btn-periodo-clear" onclick="event.stopPropagation(); limparPeriodo()" class="ml-2 hidden hover:bg-red-50 text-red-600 rounded-md w-5 h-5 items-center justify-center inline-flex transition-all"><i class="fas fa-times text-[8px]"></i></span>
                 </button>
 
                 <button onclick="abrirModalPendencias()" class="flex items-center gap-2 px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[10px] font-black transition-all shadow-md uppercase">
-                    <span class="hidden md:inline">Pendências</span> <i class="fas fa-list-ul"></i>
+                    <span class="hidden lg:inline">Pendências</span> <i class="fas fa-list-ul"></i>
                 </button>
 
-                <div class="h-8 w-px bg-gray-200 mx-2"></div>
+                <div class="h-8 w-px bg-gray-200 mx-1"></div>
 
                 <button onclick="iniciarSincronizacao(true)" title="Atualizar dados" class="flex items-center justify-center w-11 h-11 bg-gray-50 hover:bg-green-50 hover:text-green-700 text-gray-500 rounded-xl transition-all border border-gray-200">
                     <i id="sync-icon-manual" class="fas fa-sync-alt"></i>
