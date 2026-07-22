@@ -491,7 +491,7 @@
                 <h2 class="text-xl font-black uppercase tracking-tighter flex items-center gap-3">
                     Pendências de Relatórios
                     <!-- NOVO CONTADOR DE OBRAS NAS PENDÊNCIAS -->
-                    <span id="pendencias-count-tag" class="text-[10px] font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full uppercase tracking-widest border border-emerald-100 hidden">0 obras listadas</span>
+                    <span id="pendencias-count-tag" class="text-[10px] font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full uppercase tracking-widest border border-emerald-100 hidden">0 obras</span>
                 </h2>
                 <div class="flex items-center gap-4">
                     <button onclick="atualizarListaPendencias(true)" class="text-emerald-700 hover:text-emerald-900 transition-all" title="Atualizar dados">
@@ -1133,7 +1133,7 @@
 
                 // ATUALIZA O CONTADOR VISUAL NO MODAL
                 if (countTag) {
-                    countTag.innerText = `${totalObrasComPendencia} obra${totalObrasComPendencia !== 1 ? 's' : ''}`;
+                    countTag.innerText = `${totalObrasComPendencia} obra${totalObrasComPendencia !== 1 ? 's' : ''} listadas`;
                     countTag.classList.remove('hidden');
                 }
 
