@@ -1008,46 +1008,55 @@
             const refreshIcon = document.getElementById('pendencias-sync-icon');
             if (!isRefresh) { container.innerText = "CARREGANDO..."; }
             if (refreshIcon) refreshIcon.classList.add('sync-spinning');
+            
             try {
-                await iniciarSincronizacao(true);
+                // Independente da sincronização global
                 const respPlanilha = await fetch(LINK_PLANILHA_CSV + "&cache_buster=" + Date.now(), { cache: "no-store" });
                 const csvText = await respPlanilha.text();
                 const separador = csvText.includes(';') ? ';' : ',';
                 const linhasCsv = csvText.split(/\r?\n/).filter(l => l.trim() !== "");
+                
                 if (linhasCsv.length < 1) throw new Error("Planilha vazia");
+                
                 const cabecalho = linhasCsv[0].split(separador).map(c => c.replace(/"/g, '').trim().toLowerCase());
                 const idxEng = cabecalho.findIndex(c => c.includes('eng') || c.includes('nome'));
                 const idxObra = cabecalho.findIndex(c => c.includes('obra'));
-                const mapaEngenheiros = {};
-                linhasCsv.slice(1).forEach(linha => {
-                    const colunas = linha.split(separador).map(c => c.replace(/"/g, '').trim());
-                    if (colunas[idxEng] && colunas[idxObra]) {
-                        mapaEngenheiros[normalizeString(colunas[idxObra])] = colunas[idxEng];
-                    }
-                });
+                
                 const mesVisivel = globalViewDate.getMonth();
                 const anoVisivel = globalViewDate.getFullYear();
                 const hoje = new Date();
                 const ultimoDiaNoMes = new Date(anoVisivel, mesVisivel + 1, 0).getDate();
                 const diaLimite = (anoVisivel === hoje.getFullYear() && mesVisivel === hoje.getMonth()) ? hoje.getDate() : ultimoDiaNoMes;
+                
                 const agrupadoEngenheiro = {};
 
-                cachedData.forEach(res => {
-                    if (!selectedObraIds.has(res.obra._id)) return;
+                // Percorrer a planilha como base principal
+                linhasCsv.slice(1).forEach(linha => {
+                    const colunas = linha.split(separador).map(c => c.replace(/"/g, '').trim());
+                    const nomeObraPlanilha = colunas[idxObra];
+                    const engNome = colunas[idxEng] || "SEM ENGENHEIRO";
+
+                    if (!nomeObraPlanilha) return;
+
+                    const nomeObraPlanilhaNorm = normalizeString(nomeObraPlanilha);
+                    
+                    // Encontrar nos dados do sistema a obra correspondente
+                    const res = cachedData.find(r => {
+                        const nomeSist = normalizeString(r.obra.nome);
+                        return nomeSist.includes(nomeObraPlanilhaNorm) || nomeObraPlanilhaNorm.includes(nomeSist);
+                    });
+
+                    // Só processa se a obra existe no sistema e não está filtrada (selecionada)
+                    if (!res || !selectedObraIds.has(res.obra._id)) return;
+
+                    if (!agrupadoEngenheiro[engNome]) agrupadoEngenheiro[engNome] = [];
                     
                     const nomeObraUpper = res.obra.nome.toUpperCase();
                     const isDiversasGarantias = nomeObraUpper.includes("DIVERSAS - GARANTIAS");
 
-                    const nomeObraNorm = normalizeString(res.obra.nome);
-                    let engNome = "SEM ENGENHEIRO";
-                    for (let obraPlanilha in mapaEngenheiros) {
-                        if (nomeObraNorm.includes(obraPlanilha) || obraPlanilha.includes(nomeObraNorm)) {
-                            engNome = mapaEngenheiros[obraPlanilha]; break;
-                        }
-                    }
-                    if (!agrupadoEngenheiro[engNome]) agrupadoEngenheiro[engNome] = [];
                     const diasPreenchidos = new Set();
                     const diasPendentes = new Set();
+
                     res.relsMes.forEach(r => {
                         let dIn = parseDateSafely(r.data);
                         let dOut = r.dataFim ? parseDateSafely(r.dataFim) : dIn;
@@ -1080,19 +1089,22 @@
 
                     if (listaPendentes.length > 0 || faltantes.length > 0) {
                         agrupadoEngenheiro[engNome].push({
-                            obra: res.obra.nome.toUpperCase(),
+                            obra: nomeObraPlanilha.toUpperCase(),
                             pendentes: formatarIntervalos(listaPendentes, mesVisivel, anoVisivel),
                             faltantes: formatarIntervalos(faltantes, mesVisivel, anoVisivel)
                         });
                     }
                 });
+
                 const mesNome = globalViewDate.toLocaleString('pt-br', { month: 'long' });
                 let texto = "";
                 const chavesEngenheiros = Object.keys(agrupadoEngenheiro).sort((a, b) => {
                     if (a === "SEM ENGENHEIRO") return 1; if (b === "SEM ENGENHEIRO") return -1;
                     return a.localeCompare(b);
                 });
+
                 chavesEngenheiros.forEach(eng => {
+                    if (agrupadoEngenheiro[eng].length === 0) return;
                     texto += `*\`${eng.toUpperCase()}\`*\n*${mesNome.charAt(0).toUpperCase() + mesNome.slice(1)}*\n`;
                     agrupadoEngenheiro[eng].forEach(item => {
                         if (item.pendentes) texto += `Terminar de preencher ${item.obra}: ${item.pendentes}\n`;
@@ -1100,10 +1112,11 @@
                     });
                     texto += `\n`;
                 });
-                container.innerText = texto || "✅ Nenhuma pendência encontrada!";
+
+                container.innerText = texto || "✅ Nenhuma pendência encontrada para as obras da planilha!";
                 if (isRefresh) mostrarAviso("DADOS ATUALIZADOS!");
             } catch (e) {
-                container.innerText = "Erro ao buscar dados.";
+                container.innerText = "Erro ao processar pendências da planilha.";
                 console.error(e);
             } finally {
                 if (refreshIcon) refreshIcon.classList.remove('sync-spinning');
