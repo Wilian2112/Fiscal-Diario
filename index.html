@@ -1006,48 +1006,78 @@
         async function atualizarListaPendencias(isRefresh = false) {
             const container = document.getElementById('container-texto-whatsapp');
             const refreshIcon = document.getElementById('pendencias-sync-icon');
-            if (!isRefresh) { container.innerText = "CARREGANDO..."; }
+            
+            const statusAtualNorm = normalizeString(selectedStatus);
+
+            // 1. VALIDAÇÃO DE FILTROS ESPECÍFICOS
+            if (statusAtualNorm.includes("paralisada")) {
+                container.innerText = "⚠️ O FILTRO ESTÁ MARCADO COMO: OBRAS PARALISADAS.\n\nAltere o status para 'Todos' ou 'Em Andamento' para gerar a lista de pendências.";
+                if (refreshIcon) refreshIcon.classList.remove('sync-spinning');
+                return;
+            }
+            if (statusAtualNorm.includes("concluida")) {
+                container.innerText = "⚠️ O FILTRO ESTÁ MARCADO COMO: OBRAS CONCLUÍDAS.\n\nNão há necessidade de acompanhamento de pendências para obras finalizadas.";
+                if (refreshIcon) refreshIcon.classList.remove('sync-spinning');
+                return;
+            }
+            if (statusAtualNorm.includes("nao iniciada")) {
+                container.innerText = "⚠️ O FILTRO ESTÁ MARCADO COMO: OBRAS NÃO INICIADAS.\n\nAltere o status para verificar pendências de obras ativas.";
+                if (refreshIcon) refreshIcon.classList.remove('sync-spinning');
+                return;
+            }
+
+            // 2. INÍCIO DO PROCESSAMENTO
+            if (!isRefresh) { container.innerText = "CONSULTANDO DADOS (API + PLANILHA)..."; }
             if (refreshIcon) refreshIcon.classList.add('sync-spinning');
             
             try {
-                // Independente da sincronização global
+                // Busca a planilha para obter o mapeamento de engenheiros
                 const respPlanilha = await fetch(LINK_PLANILHA_CSV + "&cache_buster=" + Date.now(), { cache: "no-store" });
                 const csvText = await respPlanilha.text();
                 const separador = csvText.includes(';') ? ';' : ',';
                 const linhasCsv = csvText.split(/\r?\n/).filter(l => l.trim() !== "");
                 
-                if (linhasCsv.length < 1) throw new Error("Planilha vazia");
-                
-                const cabecalho = linhasCsv[0].split(separador).map(c => c.replace(/"/g, '').trim().toLowerCase());
+                const cabecalho = linhasCsv[0]?.split(separador).map(c => c.replace(/"/g, '').trim().toLowerCase()) || [];
                 const idxEng = cabecalho.findIndex(c => c.includes('eng') || c.includes('nome'));
                 const idxObra = cabecalho.findIndex(c => c.includes('obra'));
-                
+
+                const mapaEngenheiros = {};
+                if (linhasCsv.length > 1) {
+                    linhasCsv.slice(1).forEach(linha => {
+                        const colunas = linha.split(separador).map(c => c.replace(/"/g, '').trim());
+                        if (colunas[idxEng] && colunas[idxObra]) {
+                            mapaEngenheiros[normalizeString(colunas[idxObra])] = colunas[idxEng];
+                        }
+                    });
+                }
+
                 const mesVisivel = globalViewDate.getMonth();
                 const anoVisivel = globalViewDate.getFullYear();
                 const hoje = new Date();
                 const ultimoDiaNoMes = new Date(anoVisivel, mesVisivel + 1, 0).getDate();
                 const diaLimite = (anoVisivel === hoje.getFullYear() && mesVisivel === hoje.getMonth()) ? hoje.getDate() : ultimoDiaNoMes;
-                
+
                 const agrupadoEngenheiro = {};
 
-                // Percorrer a planilha como base principal
-                linhasCsv.slice(1).forEach(linha => {
-                    const colunas = linha.split(separador).map(c => c.replace(/"/g, '').trim());
-                    const nomeObraPlanilha = colunas[idxObra];
-                    const engNome = colunas[idxEng] || "SEM ENGENHEIRO";
-
-                    if (!nomeObraPlanilha) return;
-
-                    const nomeObraPlanilhaNorm = normalizeString(nomeObraPlanilha);
+                // Processa obras que estão no dashboard (API)
+                cachedData.forEach(res => {
+                    const statusObraAPI = normalizeString(res.obra.status.descricao);
                     
-                    // Encontrar nos dados do sistema a obra correspondente
-                    const res = cachedData.find(r => {
-                        const nomeSist = normalizeString(r.obra.nome);
-                        return nomeSist.includes(nomeObraPlanilhaNorm) || nomeObraPlanilhaNorm.includes(nomeSist);
-                    });
+                    // Aplica lógica de filtro: Se for 'todos', pega tudo selecionado. Se for 'andamento', filtra pelo nome do status na API.
+                    const matchFiltro = (statusAtualNorm === 'todos' || statusObraAPI.includes("andamento"));
 
-                    // Só processa se a obra existe no sistema e não está filtrada (selecionada)
-                    if (!res || !selectedObraIds.has(res.obra._id)) return;
+                    if (!selectedObraIds.has(res.obra._id) || !matchFiltro) return;
+
+                    const nomeObraNorm = normalizeString(res.obra.nome);
+                    let engNome = "SEM ENGENHEIRO";
+                    
+                    // Tenta encontrar engenheiro na planilha
+                    for (let obraPlanilha in mapaEngenheiros) {
+                        if (nomeObraNorm.includes(obraPlanilha) || obraPlanilha.includes(nomeObraNorm)) {
+                            engNome = mapaEngenheiros[obraPlanilha]; 
+                            break;
+                        }
+                    }
 
                     if (!agrupadoEngenheiro[engNome]) agrupadoEngenheiro[engNome] = [];
                     
@@ -1089,7 +1119,7 @@
 
                     if (listaPendentes.length > 0 || faltantes.length > 0) {
                         agrupadoEngenheiro[engNome].push({
-                            obra: nomeObraPlanilha.toUpperCase(),
+                            obra: res.obra.nome.toUpperCase(),
                             pendentes: formatarIntervalos(listaPendentes, mesVisivel, anoVisivel),
                             faltantes: formatarIntervalos(faltantes, mesVisivel, anoVisivel)
                         });
@@ -1113,10 +1143,10 @@
                     texto += `\n`;
                 });
 
-                container.innerText = texto || "✅ Nenhuma pendência encontrada para as obras da planilha!";
+                container.innerText = texto || "✅ Nenhuma pendência encontrada para as obras selecionadas!";
                 if (isRefresh) mostrarAviso("DADOS ATUALIZADOS!");
             } catch (e) {
-                container.innerText = "Erro ao processar pendências da planilha.";
+                container.innerText = "Erro ao carregar dados de pendências.";
                 console.error(e);
             } finally {
                 if (refreshIcon) refreshIcon.classList.remove('sync-spinning');
