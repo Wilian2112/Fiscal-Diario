@@ -1531,20 +1531,44 @@
         function renderDetailsContent(det) {
             const conf = getStatusConfig(det.status);
             let html = `<div class="mb-8 p-4 rounded-2xl border-2 ${conf.text.replace('text', 'border')} ${conf.css.replace('status', 'bg')}/5 flex items-center justify-between"><span class="text-[10px] font-black uppercase text-gray-400 tracking-widest">Status Geral</span><span class="px-4 py-1.5 rounded-xl ${conf.css} text-[9px] font-black uppercase">${conf.label}</span></div>`;
+            
             const section = (icon, label, count, content) => `<details class="details-section"><summary><div class="flex items-center gap-3"><i class="${icon} text-green-700"></i>${label}</div><span>${count}</span></summary><div class="p-5 text-xs text-gray-600">${content}</div></details>`;
+            
             const padrao = det.maoDeObra?.padrao?.map(m => `<div class="flex justify-between py-1 border-b"><span>${m.descricao}</span><b>${m.quantidade}</b></div>`).join('') || '';
             const perso = det.maoDeObra?.personalizada?.map(m => `<div class="flex justify-between py-1 border-b"><span>${m.nome} <small class="text-gray-400">(${m.funcao})</small></span><b>1</b></div>`).join('') || '';
+            
             html += section('fas fa-users', 'Efetivo em Campo', (det.maoDeObra?.padrao?.length || 0) + (det.maoDeObra?.personalizada?.length || 0), (padrao + perso) || 'Nenhuma informação.');
+            
             html += section('fas fa-tractor', 'Maquinário', det.equipamentos?.length || 0, det.equipamentos?.map(e => `<div class="flex justify-between py-1 border-b"><span>${e.descricao}</span><b>${e.quantidade || 1}</b></div>`).join('') || 'Nenhum equipamento.');
+            
             html += section('fas fa-tasks', 'Serviços Executados', det.atividades?.length || 0, det.atividades?.map(a => `<div class="mb-2 pb-1 border-b"><b>${a.descricao}</b><br><small class="text-green-700 uppercase font-bold">${a.status?.descricao} - ${a.porcentagem}%</small></div>`).join('') || 'Nenhuma atividade.');
+
+            // NOVA SEÇÃO: COMENTÁRIOS
+            const comentariosConteudo = (det.comentarios && det.comentarios.length > 0)
+                ? det.comentarios.map(c => `
+                    <div class="mb-3 pb-2 border-b last:border-0">
+                        <div class="flex justify-between items-center mb-1">
+                            <b class="text-gray-800 uppercase text-[10px]">${c.usuario?.nome || 'Sistema'}</b>
+                            <span class="text-[9px] text-gray-400">${c.dataHora || ''}</span>
+                        </div>
+                        <p class="text-gray-600 italic">"${c.descricao}"</p>
+                    </div>
+                `).join('')
+                : 'Nenhum comentário registrado.';
+            
+            html += section('fas fa-comments', 'Comentários', det.comentarios?.length || 0, comentariosConteudo);
+
             const fotosConteudo = (det.galeriaDeFotos && det.galeriaDeFotos.length > 0) 
                 ? `<div class="grid grid-cols-2 gap-2">${det.galeriaDeFotos.map(f => `<img src="${f.urlMiniatura || f.url}" class="w-full aspect-square object-cover rounded-xl" loading="lazy">`).join('')}</div>` 
                 : 'Nenhuma foto.';
+            
             html += section('fas fa-camera', 'Galeria de Fotos', det.galeriaDeFotos?.length || 0, fotosConteudo);
+
             if (det.ocorrencias?.length > 0) {
                 html += `<div class="mt-6 text-[9px] font-black text-red-500 uppercase tracking-widest mb-3">Ocorrências</div>`;
                 det.ocorrencias.forEach(o => { html += `<div class="p-4 bg-red-50 border border-red-100 rounded-2xl mb-2 text-xs font-bold text-red-700">${o.descricao}</div>`; });
             }
+            
             document.getElementById('side-content').innerHTML = html;
         }
 
