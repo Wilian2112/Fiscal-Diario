@@ -489,8 +489,7 @@
         <div id="modal-pendencias-content" class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl flex flex-col overflow-hidden modal-content-anim modal-scale-hide">
             <div class="p-6 border-b flex justify-between items-center bg-gray-50">
                 <h2 class="text-xl font-black uppercase tracking-tighter flex items-center gap-3">
-                    Pendências de Relatórios
-                    <!-- NOVO CONTADOR DE OBRAS NAS PENDÊNCIAS -->
+                    Pendências
                     <span id="pendencias-count-tag" class="text-[10px] font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full uppercase tracking-widest border border-emerald-100 hidden">0 obras</span>
                 </h2>
                 <div class="flex items-center gap-4">
@@ -502,7 +501,38 @@
                     </button>
                 </div>
             </div>
-            <div class="p-8 overflow-y-auto max-h-[60vh]">
+
+            <!-- FILTROS DE PENDÊNCIAS -->
+            <div class="px-8 py-4 bg-white border-b grid grid-cols-2 gap-4">
+                <div class="space-y-2">
+                    <p class="text-[9px] font-black text-gray-400 uppercase">Filtrar Dias:</p>
+                    <div class="flex gap-4">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="pend-check-uteis" checked onchange="atualizarListaPendencias(false)" class="custom-checkbox">
+                            <span class="text-[10px] font-bold uppercase text-gray-600">Dias Úteis</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="pend-check-fds" onchange="atualizarListaPendencias(false)" class="custom-checkbox">
+                            <span class="text-[10px] font-bold uppercase text-gray-600">Sáb/Dom</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <p class="text-[9px] font-black text-gray-400 uppercase">Tipo de Pendência:</p>
+                    <div class="flex gap-4">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="pend-check-faltantes" checked onchange="atualizarListaPendencias(false)" class="custom-checkbox">
+                            <span class="text-[10px] font-bold uppercase text-gray-600">Não Criados</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="pend-check-pendentes" checked onchange="atualizarListaPendencias(false)" class="custom-checkbox">
+                            <span class="text-[10px] font-bold uppercase text-gray-600">Em Preenchimento</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-8 overflow-y-auto max-h-[50vh]">
                 <div id="container-texto-whatsapp" class="bg-slate-50 text-slate-800 p-6 rounded-2xl font-mono text-xs whitespace-pre-wrap leading-relaxed border border-slate-200 shadow-inner">
                     Gerando lista formatada...
                 </div>
@@ -549,11 +579,10 @@
         <div id="side-content" class="flex-grow overflow-y-auto custom-scroll p-8"></div>
     </div>
 
-    <!-- CABEÇALHO CORRIGIDO: COMPONENTES LATERAIS SHRINK-0 E PESQUISA FLEX-1 MIN-W -->
+    <!-- CABEÇALHO -->
     <header class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
         <div class="max-w-[1600px] mx-auto px-6 lg:px-12 h-24 flex items-center justify-between gap-6">
             
-            <!-- LADO ESQUERDO: FIXO -->
             <div class="flex items-center gap-4 shrink-0">
                 <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRmHLLhhzqVAzvECxD7HCqYHK4Znpr3kQvwYg&s" alt="Logo Pacopedra" class="h-12 w-auto object-contain">
                 <div class="hidden lg:block h-8 w-px bg-gray-200"></div>
@@ -562,13 +591,11 @@
                 </div>
             </div>
 
-            <!-- CENTRO: BARRA DE PESQUISA (GARANTE VISIBILIDADE) -->
             <div class="flex-1 min-w-[350px] max-w-2xl relative">
                 <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
                 <input type="text" id="search-input" oninput="handleGlobalSearch()" placeholder="Pesquisar Obra..." class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3.5 pl-11 pr-4 text-xs font-bold outline-none focus:ring-2 focus:ring-green-500/20 focus:bg-white focus:border-green-600 transition-all shadow-inner">
             </div>
 
-            <!-- LADO DIREITO: BOTÕES FIXOS -->
             <div class="flex items-center gap-3 shrink-0">
                 <div class="relative">
                     <button onclick="toggleStatusDropdown()" class="flex items-center gap-2 px-3 py-3 bg-gray-50 hover:bg-100 text-gray-600 rounded-xl text-[10px] font-black transition-all border border-gray-200 uppercase min-w-[140px] justify-between">
@@ -645,7 +672,6 @@
         let selectedStatus = 'todos';
         let globalSearchTerm = "";
 
-        // VARIÁVEIS DE PERÍODO
         let periodoInicio = null;
         let periodoFim = null;
         let selectorAnoTemporario = null;
@@ -708,164 +734,95 @@
             const labelAno = document.getElementById('selector-ano-label');
             const btnPrev = document.getElementById('btn-selector-ano-prev');
             const btnNext = document.getElementById('btn-selector-ano-next');
-            
             grid.innerHTML = '';
             labelAno.innerText = selectorAnoTemporario;
-            
-            labelAno.onclick = (e) => {
-                e.stopPropagation();
-                abrirModalAnos();
-            };
-
+            labelAno.onclick = (e) => { e.stopPropagation(); abrirModalAnos(); };
             const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
             const mesAtualVisualizado = globalViewDate.getMonth();
             const anoAtualVisualizado = globalViewDate.getFullYear();
             const hoje = new Date();
-
             meses.forEach((nome, idx) => {
                 const btn = document.createElement('button');
                 const isMesAtivo = (idx === mesAtualVisualizado && selectorAnoTemporario === anoAtualVisualizado);
-                
                 btn.className = `py-3 rounded-xl text-[10px] font-black uppercase transition-all ${isMesAtivo ? 'bg-green-700 text-white shadow-lg' : 'bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-green-700'}`;
-                
                 const dataTesteIni = new Date(selectorAnoTemporario, idx, 1, 12, 0, 0);
                 const dataTesteFim = new Date(selectorAnoTemporario, idx + 1, 0, 23, 59, 59);
-                
                 let isBlocked = dataTesteIni > hoje; 
                 if (periodoInicio && dataTesteFim < periodoInicio) isBlocked = true; 
                 if (periodoFim && dataTesteIni > periodoFim) isBlocked = true; 
-
-                if (isBlocked) {
-                    btn.disabled = true;
-                    btn.style.opacity = '0.3';
-                    btn.style.cursor = 'not-allowed'; 
-                } else {
+                if (isBlocked) { btn.disabled = true; btn.style.opacity = '0.3'; btn.style.cursor = 'not-allowed'; } else {
                     btn.style.cursor = 'pointer';
-                    btn.onclick = () => {
-                        globalViewDate = new Date(selectorAnoTemporario, idx, 1, 12, 0, 0);
-                        fecharModalMeses();
-                        updateGlobalLabel();
-                        render();
-                    };
+                    btn.onclick = () => { globalViewDate = new Date(selectorAnoTemporario, idx, 1, 12, 0, 0); fecharModalMeses(); updateGlobalLabel(); render(); };
                 }
                 btn.innerText = nome;
                 grid.appendChild(btn);
             });
-
             btnPrev.disabled = (periodoInicio && selectorAnoTemporario <= periodoInicio.getFullYear());
             btnNext.disabled = (selectorAnoTemporario >= hoje.getFullYear() || (periodoFim && selectorAnoTemporario >= periodoFim.getFullYear()));
-            
             btnPrev.style.cursor = btnPrev.disabled ? 'not-allowed' : 'pointer';
             btnPrev.style.opacity = btnPrev.disabled ? '0.2' : '1';
             btnNext.style.cursor = btnNext.disabled ? 'not-allowed' : 'pointer';
             btnNext.style.opacity = btnNext.disabled ? '0.2' : '1';
-
             btnPrev.onclick = !btnPrev.disabled ? () => { selectorAnoTemporario--; renderGridMeses(); } : null;
             btnNext.onclick = !btnNext.disabled ? () => { selectorAnoTemporario++; renderGridMeses(); } : null;
         }
 
-        function fecharModalMeses() {
-            fecharModalAnim('modal-meses', 'modal-meses-content');
-        }
+        function fecharModalMeses() { fecharModalAnim('modal-meses', 'modal-meses-content'); }
 
         function abrirModalAnos() {
             const container = document.getElementById('grid-anos-selector');
             container.innerHTML = '';
-            
             const anoAtual = new Date().getFullYear();
             const anoInicio = 2010;
-            
             for (let a = anoAtual; a >= anoInicio; a--) {
                 const btn = document.createElement('button');
                 const isSelecionado = (a === selectorAnoTemporario);
-                
                 let isAnoBlocked = false;
                 if (periodoInicio && a < periodoInicio.getFullYear()) isAnoBlocked = true;
                 if (periodoFim && a > periodoFim.getFullYear()) isAnoBlocked = true;
-
                 btn.className = `py-3 rounded-xl text-[10px] font-black uppercase transition-all ${isSelecionado ? 'bg-green-700 text-white shadow-lg' : 'bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-green-700'}`;
                 btn.innerText = a;
-
-                if (isAnoBlocked) {
-                    btn.disabled = true;
-                    btn.style.opacity = '0.3';
-                    btn.style.cursor = 'not-allowed';
-                } else {
-                    btn.onclick = () => selecionarAnoNoModal(a);
-                }
-                
+                if (isAnoBlocked) { btn.disabled = true; btn.style.opacity = '0.3'; btn.style.cursor = 'not-allowed'; } else { btn.onclick = () => selecionarAnoNoModal(a); }
                 container.appendChild(btn);
             }
-            
             abrirModalAnim('modal-anos', 'modal-anos-content');
         }
 
-        function selecionarAnoNoModal(ano) {
-            selectorAnoTemporario = ano;
-            fecharModalAnos();
-            renderGridMeses();
-        }
-
-        function fecharModalAnos() {
-            fecharModalAnim('modal-anos', 'modal-anos-content');
-        }
-
-        function abrirModalPeriodo() {
-            abrirModalAnim('modal-periodo', 'modal-periodo-content');
-        }
-
-        function fecharModalPeriodo() {
-            fecharModalAnim('modal-periodo', 'modal-periodo-content');
-        }
+        function selecionarAnoNoModal(ano) { selectorAnoTemporario = ano; fecharModalAnos(); renderGridMeses(); }
+        function fecharModalAnos() { fecharModalAnim('modal-anos', 'modal-anos-content'); }
+        function abrirModalPeriodo() { abrirModalAnim('modal-periodo', 'modal-periodo-content'); }
+        function fecharModalPeriodo() { fecharModalAnim('modal-periodo', 'modal-periodo-content'); }
 
         function aplicarPeriodo() {
             const valIni = document.getElementById('input-data-inicio').value;
             const valFim = document.getElementById('input-data-fim').value;
-
             if (valIni) periodoInicio = new Date(valIni + 'T12:00:00'); else periodoInicio = null;
             if (valFim) periodoFim = new Date(valFim + 'T12:00:00'); else periodoFim = null;
-
             const btnLabel = document.getElementById('btn-periodo-label');
             const btnClear = document.getElementById('btn-periodo-clear');
-
             if (periodoInicio && periodoFim) {
                 const fIni = periodoInicio.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit', year:'2-digit'});
                 const fFim = periodoFim.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit', year:'2-digit'});
                 btnLabel.innerText = `${fIni} - ${fFim}`;
                 if(btnClear) btnClear.classList.remove('hidden');
-            } else {
-                btnLabel.innerText = 'Período';
-                if(btnClear) btnClear.classList.add('hidden');
-            }
-
+            } else { btnLabel.innerText = 'Período'; if(btnClear) btnClear.classList.add('hidden'); }
             if (periodoInicio && globalViewDate < new Date(periodoInicio.getFullYear(), periodoInicio.getMonth(), 1, 12, 0, 0)) {
                 globalViewDate = new Date(periodoInicio.getFullYear(), periodoInicio.getMonth(), 1, 12, 0, 0);
             } else if (periodoFim && globalViewDate > new Date(periodoFim.getFullYear(), periodoFim.getMonth(), 1, 12, 0, 0)) {
                 globalViewDate = new Date(periodoFim.getFullYear(), periodoFim.getMonth(), 1, 12, 0, 0);
             }
-
-            fecharModalPeriodo();
-            updateGlobalLabel();
-            render();
-            mostrarAviso("PERÍODO APLICADO!");
+            fecharModalPeriodo(); updateGlobalLabel(); render(); mostrarAviso("PERÍODO APLICADO!");
         }
 
         function limparPeriodo() {
-            periodoInicio = null;
-            periodoFim = null;
+            periodoInicio = null; periodoFim = null;
             document.getElementById('input-data-inicio').value = '';
             document.getElementById('input-data-fim').value = '';
             document.getElementById('btn-periodo-label').innerText = 'Período';
-            
             globalViewDate = new Date(now.getFullYear(), now.getMonth(), 1, 12, 0, 0);
-
             const btnClear = document.getElementById('btn-periodo-clear');
             if(btnClear) btnClear.classList.add('hidden');
-
-            fecharModalPeriodo();
-            updateGlobalLabel();
-            render();
-            mostrarAviso("FILTRO DE PERÍODO REMOVIDO");
+            fecharModalPeriodo(); updateGlobalLabel(); render(); mostrarAviso("FILTRO DE PERÍODO REMOVIDO");
         }
 
         function syncSelectionWithFilters() {
@@ -873,101 +830,58 @@
             todasObras.forEach(o => {
                 const matchStatus = (selectedStatus === 'todos' || o.status.descricao === selectedStatus);
                 const isManuallyHidden = (manualOverrides[o._id] === false);
-                if (matchStatus && !isManuallyHidden) {
-                    selectedObraIds.add(o._id);
-                }
+                if (matchStatus && !isManuallyHidden) { selectedObraIds.add(o._id); }
             });
         }
 
-        function handleGlobalSearch() {
-            globalSearchTerm = document.getElementById('search-input').value.toLowerCase();
-            render();
-        }
-
-        function filterByStatus(status) {
-            selectedStatus = status;
-            document.getElementById('status-dropdown').classList.remove('open');
-            syncSelectionWithFilters();
-            render();
-        }
-
-        function abrirModalSelecao() {
-            abrirModalAnim('modal-selecao-obras', 'modal-selecao-content');
-            renderListaSelecao();
-        }
-
-        function fecharModalSelecao() {
-            fecharModalAnim('modal-selecao-obras', 'modal-selecao-content');
-        }
+        function handleGlobalSearch() { globalSearchTerm = document.getElementById('search-input').value.toLowerCase(); render(); }
+        function filterByStatus(status) { selectedStatus = status; document.getElementById('status-dropdown').classList.remove('open'); syncSelectionWithFilters(); render(); }
+        function abrirModalSelecao() { abrirModalAnim('modal-selecao-obras', 'modal-selecao-content'); renderListaSelecao(); }
+        function fecharModalSelecao() { fecharModalAnim('modal-selecao-obras', 'modal-selecao-content'); }
 
         function renderListaSelecao() {
             const container = document.getElementById('lista-obras-selecao');
             const countLabel = document.getElementById('modal-selection-count');
             const modalSearch = document.getElementById('search-obras-modal').value.toLowerCase();
-
             countLabel.innerText = `${selectedObraIds.size} selecionada${selectedObraIds.size !== 1 ? 's' : ''}`;
             container.innerHTML = '';
-
-            todasObras
-                .filter(o => o.nome.toLowerCase().includes(modalSearch))
-                .sort((a, b) => {
-                    const aManuallyHidden = manualOverrides[a._id] === false;
-                    const bManuallyHidden = manualOverrides[b._id] === false;
-                    if (aManuallyHidden !== bManuallyHidden) return aManuallyHidden ? -1 : 1;
-                    const aIsVisible = selectedObraIds.has(a._id);
-                    const bIsVisible = selectedObraIds.has(b._id);
-                    if (aIsVisible !== bIsVisible) return aIsVisible ? -1 : 1;
-                    return a.nome.localeCompare(b.nome);
-                })
-                .forEach(obra => {
-                    const div = document.createElement('div');
-                    const isChecked = selectedObraIds.has(obra._id);
-                    const isHidden = manualOverrides[obra._id] === false;
-                    
-                    div.className = `modal-obra-row flex items-center gap-3 py-2.5 px-3 border-b border-gray-50 last:border-0 rounded-lg cursor-pointer ${isHidden ? 'is-hidden' : (isChecked ? 'selected' : '')}`;
-                    div.onclick = () => toggleObraSelecao(obra._id);
-
-                    div.innerHTML = `
-                        <input type="checkbox" class="custom-checkbox pointer-events-none shrink-0" ${isChecked ? 'checked' : ''}>
-                        <div class="flex flex-col truncate">
-                            <span class="text-sm font-semibold ${isHidden ? 'text-red-900' : (isChecked ? 'text-slate-800' : 'text-slate-400')} truncate uppercase">${obra.nome}</span>
-                            <span class="text-[9px] font-bold ${isHidden ? 'text-red-400' : 'text-gray-400'} uppercase">${obra.status.descricao}</span>
-                        </div>
-                    `;
-                    container.appendChild(div);
-                });
+            todasObras.filter(o => o.nome.toLowerCase().includes(modalSearch)).sort((a, b) => {
+                const aManuallyHidden = manualOverrides[a._id] === false;
+                const bManuallyHidden = manualOverrides[b._id] === false;
+                if (aManuallyHidden !== bManuallyHidden) return aManuallyHidden ? -1 : 1;
+                const aIsVisible = selectedObraIds.has(a._id);
+                const bIsVisible = selectedObraIds.has(b._id);
+                if (aIsVisible !== bIsVisible) return aIsVisible ? -1 : 1;
+                return a.nome.localeCompare(b.nome);
+            }).forEach(obra => {
+                const div = document.createElement('div');
+                const isChecked = selectedObraIds.has(obra._id);
+                const isHidden = manualOverrides[obra._id] === false;
+                div.className = `modal-obra-row flex items-center gap-3 py-2.5 px-3 border-b border-gray-50 last:border-0 rounded-lg cursor-pointer ${isHidden ? 'is-hidden' : (isChecked ? 'selected' : '')}`;
+                div.onclick = () => toggleObraSelecao(obra._id);
+                div.innerHTML = `<input type="checkbox" class="custom-checkbox pointer-events-none shrink-0" ${isChecked ? 'checked' : ''}><div class="flex flex-col truncate"><span class="text-sm font-semibold ${isHidden ? 'text-red-900' : (isChecked ? 'text-slate-800' : 'text-slate-400')} truncate uppercase">${obra.nome}</span><span class="text-[9px] font-bold ${isHidden ? 'text-red-400' : 'text-gray-400'} uppercase">${obra.status.descricao}</span></div>`;
+                container.appendChild(div);
+            });
         }
 
         function toggleObraSelecao(id) {
             const isCurrentlySelected = selectedObraIds.has(id);
             manualOverrides[id] = !isCurrentlySelected;
             localStorage.setItem('obras_manual_overrides', JSON.stringify(manualOverrides));
-            syncSelectionWithFilters();
-            renderListaSelecao();
+            syncSelectionWithFilters(); renderListaSelecao();
         }
 
         function marcarTodasNoModal(status) {
             const modalSearch = document.getElementById('search-obras-modal').value.toLowerCase();
-            todasObras.forEach(o => {
-                if (o.nome.toLowerCase().includes(modalSearch)) {
-                    manualOverrides[o._id] = status;
-                }
-            });
+            todasObras.forEach(o => { if (o.nome.toLowerCase().includes(modalSearch)) { manualOverrides[o._id] = status; } });
             localStorage.setItem('obras_manual_overrides', JSON.stringify(manualOverrides));
-            syncSelectionWithFilters();
-            renderListaSelecao();
+            syncSelectionWithFilters(); renderListaSelecao();
         }
 
-        function filtrarObrasNoModal() {
-            renderListaSelecao();
-        }
+        function filtrarObrasNoModal() { renderListaSelecao(); }
+        function aplicarFiltroSelecao() { fecharModalSelecao(); render(); }
 
-        function aplicarFiltroSelecao() {
-            fecharModalSelecao();
-            render();
-        }
-
-        function formatarIntervalos(dias, mes, ano) {
+        function formatarIntervalos(dias, mes, ano, considerarFdsNoRange = true) {
             if (dias.length === 0) return "";
             dias.sort((a, b) => a - b);
             let segmentos = [];
@@ -979,7 +893,7 @@
                     let proximo = dias[j + 1];
                     let diff = proximo - atual;
                     if (diff === 1) { j++; } 
-                    else if (diff <= 3) {
+                    else if (considerarFdsNoRange && diff <= 3) {
                         let temDiaUtilNoMeio = false;
                         for (let d = atual + 1; d < proximo; d++) {
                             let dataTeste = new Date(ano, mes, d);
@@ -999,10 +913,7 @@
                 i = j + 1;
             }
             return segmentos.map(s => {
-                if (s.tipo === 'unicos') {
-                    const label = s.valores.length > 1 ? "DIAS" : "DIA";
-                    return `${label} ${s.valores.map(v => v.toString().padStart(2, '0')).join(', ')}`;
-                }
+                if (s.tipo === 'unicos') { const label = s.valores.length > 1 ? "DIAS" : "DIA"; return `${label} ${s.valores.map(v => v.toString().padStart(2, '0')).join(', ')}`; }
                 return `DO DIA ${s.de.toString().padStart(2, '0')} AO ${s.ate.toString().padStart(2, '0')}`;
             }).join(' & ');
         }
@@ -1011,203 +922,116 @@
             const container = document.getElementById('container-texto-whatsapp');
             const refreshIcon = document.getElementById('pendencias-sync-icon');
             const countTag = document.getElementById('pendencias-count-tag');
-            
+            const filterUteis = document.getElementById('pend-check-uteis').checked;
+            const filterFds = document.getElementById('pend-check-fds').checked;
+            const showFaltantes = document.getElementById('pend-check-faltantes').checked;
+            const showPendentes = document.getElementById('pend-check-pendentes').checked;
             const statusAtualNorm = normalizeString(selectedStatus);
-
-            // 1. VALIDAÇÃO DE FILTROS ESPECÍFICOS
-            if (statusAtualNorm.includes("paralisada")) {
-                container.innerText = "⚠️ O FILTRO ESTÁ MARCADO COMO: OBRAS PARALISADAS.\n\nAltere o status para 'Todos' ou 'Em Andamento' para gerar a lista de pendências.";
+            if (statusAtualNorm.includes("paralisada") || statusAtualNorm.includes("concluida") || statusAtualNorm.includes("nao iniciada")) {
+                container.innerText = "⚠️ FILTRO DE STATUS INCOMPATÍVEL.\n\nAltere para 'Todos' ou 'Em Andamento'.";
                 if (refreshIcon) refreshIcon.classList.remove('sync-spinning');
-                if (countTag) countTag.classList.add('hidden');
-                return;
+                if (countTag) countTag.classList.add('hidden'); return;
             }
-            if (statusAtualNorm.includes("concluida")) {
-                container.innerText = "⚠️ O FILTRO ESTÁ MARCADO COMO: OBRAS CONCLUÍDAS.\n\nNão há necessidade de acompanhamento de pendências para obras finalizadas.";
-                if (refreshIcon) refreshIcon.classList.remove('sync-spinning');
-                if (countTag) countTag.classList.add('hidden');
-                return;
-            }
-            if (statusAtualNorm.includes("nao iniciada")) {
-                container.innerText = "⚠️ O FILTRO ESTÁ MARCADO COMO: OBRAS NÃO INICIADAS.\n\nAltere o status para verificar pendências de obras ativas.";
-                if (refreshIcon) refreshIcon.classList.remove('sync-spinning');
-                if (countTag) countTag.classList.add('hidden');
-                return;
-            }
-
-            // 2. INÍCIO DO PROCESSAMENTO
-            if (!isRefresh) { container.innerText = "CARREGANDO INFORMAÇÕES..."; }
+            if (!isRefresh) { container.innerText = "SINCRONIZANDO..."; }
             if (refreshIcon) refreshIcon.classList.add('sync-spinning');
-            
             try {
                 const respPlanilha = await fetch(LINK_PLANILHA_CSV + "&cache_buster=" + Date.now(), { cache: "no-store" });
                 const csvText = await respPlanilha.text();
                 const separador = csvText.includes(';') ? ';' : ',';
                 const linhasCsv = csvText.split(/\r?\n/).filter(l => l.trim() !== "");
-                
                 const cabecalho = linhasCsv[0]?.split(separador).map(c => c.replace(/"/g, '').trim().toLowerCase()) || [];
                 const idxEng = cabecalho.findIndex(c => c.includes('eng') || c.includes('nome'));
                 const idxObra = cabecalho.findIndex(c => c.includes('obra'));
-
                 const mapaEngenheiros = {};
                 if (linhasCsv.length > 1) {
                     linhasCsv.slice(1).forEach(linha => {
                         const colunas = linha.split(separador).map(c => c.replace(/"/g, '').trim());
-                        if (colunas[idxEng] && colunas[idxObra]) {
-                            mapaEngenheiros[normalizeString(colunas[idxObra])] = colunas[idxEng];
-                        }
+                        if (colunas[idxEng] && colunas[idxObra]) { mapaEngenheiros[normalizeString(colunas[idxObra])] = colunas[idxEng]; }
                     });
                 }
-
                 const mesVisivel = globalViewDate.getMonth();
                 const anoVisivel = globalViewDate.getFullYear();
-                const hoje = new Date();
+                const hoje = new Date(); hoje.setHours(12,0,0,0);
                 const ultimoDiaNoMes = new Date(anoVisivel, mesVisivel + 1, 0).getDate();
                 const diaLimite = (anoVisivel === hoje.getFullYear() && mesVisivel === hoje.getMonth()) ? hoje.getDate() : ultimoDiaNoMes;
-
                 const agrupadoEngenheiro = {};
-                let totalObrasComPendencia = 0; // CONTADOR DE OBRAS
-
+                let totalObrasComPendencia = 0;
+                
+                // FILTRO: Respeitar Obras Selecionadas, Status e AGORA o termo de Busca (globalSearchTerm)
                 cachedData.forEach(res => {
                     const statusObraAPI = normalizeString(res.obra.status.descricao);
                     const matchFiltro = (statusAtualNorm === 'todos' || statusObraAPI.includes("andamento"));
-
-                    if (!selectedObraIds.has(res.obra._id) || !matchFiltro) return;
+                    const matchBusca = res.obra.nome.toLowerCase().includes(globalSearchTerm);
+                    
+                    if (!selectedObraIds.has(res.obra._id) || !matchFiltro || !matchBusca) return;
 
                     const nomeObraNorm = normalizeString(res.obra.nome);
                     let engNome = "SEM ENGENHEIRO";
-                    
-                    for (let obraPlanilha in mapaEngenheiros) {
-                        if (nomeObraNorm.includes(obraPlanilha) || obraPlanilha.includes(nomeObraNorm)) {
-                            engNome = mapaEngenheiros[obraPlanilha]; 
-                            break;
-                        }
-                    }
-
+                    for (let obraPlanilha in mapaEngenheiros) { if (nomeObraNorm.includes(obraPlanilha) || obraPlanilha.includes(nomeObraNorm)) { engNome = mapaEngenheiros[obraPlanilha]; break; } }
                     if (!agrupadoEngenheiro[engNome]) agrupadoEngenheiro[engNome] = [];
-                    
-                    const nomeObraUpper = res.obra.nome.toUpperCase();
-                    const isDiversasGarantias = nomeObraUpper.includes("DIVERSAS - GARANTIAS");
-
+                    const isDiversasGarantias = res.obra.nome.toUpperCase().includes("DIVERSAS - GARANTIAS");
                     const diasPreenchidos = new Set();
-                    const diasPendentes = new Set();
-
+                    const diasStatusPendente = new Set();
                     res.relsMes.forEach(r => {
-                        let dIn = parseDateSafely(r.data);
-                        let dOut = r.dataFim ? parseDateSafely(r.dataFim) : dIn;
+                        let dIn = parseDateSafely(r.data), dOut = r.dataFim ? parseDateSafely(r.dataFim) : dIn;
                         if (dIn) {
                             let curr = new Date(dIn);
-                            let loopLimit = 0;
-                            while (curr <= dOut && loopLimit < 366) {
+                            while (curr <= dOut) {
                                 if (curr.getMonth() === mesVisivel && curr.getFullYear() === anoVisivel) {
                                     const diaNum = curr.getDate();
                                     diasPreenchidos.add(diaNum);
-                                    if (r.status.id === 1) diasPendentes.add(diaNum);
+                                    if (r.status.id === 1) diasStatusPendente.add(diaNum);
                                 }
                                 curr.setDate(curr.getDate() + 1);
-                                loopLimit++;
                             }
                         }
                     });
-
-                    const faltantes = [];
-                    if (!isDiversasGarantias) {
-                        for (let d = 1; d <= diaLimite; d++) {
-                            if (!diasPreenchidos.has(d)) {
-                                const dataTeste = new Date(anoVisivel, mesVisivel, d);
-                                if (dataTeste.getDay() !== 0 && dataTeste.getDay() !== 6) faltantes.push(d);
-                            }
+                    const faltantesFinal = []; const pendentesFinal = [];
+                    for (let d = 1; d <= diaLimite; d++) {
+                        const dataTeste = new Date(anoVisivel, mesVisivel, d);
+                        const isFds = (dataTeste.getDay() === 0 || dataTeste.getDay() === 6);
+                        const isHoje = (anoVisivel === hoje.getFullYear() && mesVisivel === hoje.getMonth() && d === hoje.getDate());
+                        if (isFds && !filterFds) continue;
+                        if (!isFds && !filterUteis) continue;
+                        if (isHoje) { if (showPendentes && diasStatusPendente.has(d)) { pendentesFinal.push(d); } } 
+                        else {
+                            if (showPendentes && diasStatusPendente.has(d)) { pendentesFinal.push(d); }
+                            if (showFaltantes && !diasPreenchidos.has(d) && !isDiversasGarantias) { faltantesFinal.push(d); }
                         }
                     }
-
-                    const listaPendentes = Array.from(diasPendentes);
-
-                    if (listaPendentes.length > 0 || faltantes.length > 0) {
-                        totalObrasComPendencia++; // INCREMENTA O CONTADOR
+                    if (pendentesFinal.length > 0 || faltantesFinal.length > 0) {
+                        totalObrasComPendencia++;
                         agrupadoEngenheiro[engNome].push({
                             obra: res.obra.nome.toUpperCase(),
-                            pendentes: formatarIntervalos(listaPendentes, mesVisivel, anoVisivel),
-                            faltantes: formatarIntervalos(faltantes, mesVisivel, anoVisivel)
+                            pendentes: formatarIntervalos(pendentesFinal, mesVisivel, anoVisivel, filterFds),
+                            faltantes: formatarIntervalos(faltantesFinal, mesVisivel, anoVisivel, filterFds)
                         });
                     }
                 });
-
-                // ATUALIZA O CONTADOR VISUAL NO MODAL
-                if (countTag) {
-                    countTag.innerText = `${totalObrasComPendencia} obra${totalObrasComPendencia !== 1 ? 's' : ''} listadas`;
-                    countTag.classList.remove('hidden');
-                }
-
+                if (countTag) { countTag.innerText = `${totalObrasComPendencia} obra${totalObrasComPendencia !== 1 ? 's' : ''} encontradas`; countTag.classList.remove('hidden'); }
                 const mesNome = globalViewDate.toLocaleString('pt-br', { month: 'long' });
                 let html = "";
-                const chavesEngenheiros = Object.keys(agrupadoEngenheiro).sort((a, b) => {
-                    if (a === "SEM ENGENHEIRO") return 1; if (b === "SEM ENGENHEIRO") return -1;
-                    return a.localeCompare(b);
-                });
-
+                const chavesEngenheiros = Object.keys(agrupadoEngenheiro).sort((a, b) => { if (a === "SEM ENGENHEIRO") return 1; if (b === "SEM ENGENHEIRO") return -1; return a.localeCompare(b); });
                 chavesEngenheiros.forEach(eng => {
                     if (agrupadoEngenheiro[eng].length === 0) return;
-                    // Incluímos as marcações de WhatsApp (* e `) para que o innerText as capture ao copiar
                     html += `<div class="mb-4"><strong>*\`${eng.toUpperCase()}\`*</strong><br><strong>*${mesNome.charAt(0).toUpperCase() + mesNome.slice(1)}*</strong><br>`;
                     agrupadoEngenheiro[eng].forEach(item => {
-                        if (item.pendentes) {
-                            html += `<div style="color: #fbbf24; font-weight: 700;">Terminar de preencher ${item.obra}: ${item.pendentes}</div>`;
-                        }
-                        if (item.faltantes) {
-                            html += `<div style="color: #ef4444; font-weight: 700;">Não foi criado ${item.obra}: ${item.faltantes}</div>`;
-                        }
+                        if (item.pendentes) { html += `<div style="color: #fbbf24; font-weight: 700;">Terminar de preencher ${item.obra}: ${item.pendentes}</div>`; }
+                        if (item.faltantes) { html += `<div style="color: #ef4444; font-weight: 700;">Não foi criado ${item.obra}: ${item.faltantes}</div>`; }
                     });
-                    // Adicionamos um <br> extra no final de cada engenheiro para garantir o espaço no innerText
                     html += `<br></div>`;
                 });
-
-                container.innerHTML = html || "✅ Nenhuma pendência encontrada para as obras selecionadas!";
+                container.innerHTML = html || "✅ Nenhuma pendência encontrada para os filtros atuais!";
                 if (isRefresh) mostrarAviso("DADOS ATUALIZADOS!");
-            } catch (e) {
-                container.innerText = "Erro ao carregar dados de pendências.";
-                console.error(e);
-            } finally {
-                if (refreshIcon) refreshIcon.classList.remove('sync-spinning');
-            }
+            } catch (e) { container.innerText = "Erro ao processar dados."; console.error(e); } finally { if (refreshIcon) refreshIcon.classList.remove('sync-spinning'); }
         }
 
-        function abrirModalPendencias() {
-            abrirModalAnim('modal-pendencias', 'modal-pendencias-content');
-            atualizarListaPendencias(false);
-        }
-
-        function mostrarAviso(mensagem) {
-            const toast = document.getElementById('toast-sucesso');
-            const toastText = document.getElementById('toast-text');
-            toastText.innerText = mensagem;
-            toast.classList.remove('hidden');
-            setTimeout(() => { toast.classList.add('hidden'); }, 3000);
-        }
-
-        function copiarTextoWhatsApp() {
-            // O innerText ignora as tags HTML mas mantém os caracteres de texto literal (* e `)
-            const texto = document.getElementById('container-texto-whatsapp').innerText;
-            navigator.clipboard.writeText(texto).then(() => { mostrarAviso("TEXTO COPIADO COM SUCESSO!"); });
-        }
-
-        function downloadTextoPendencias() {
-            const texto = document.getElementById('container-texto-whatsapp').innerText;
-            const blob = new Blob([texto], { type: 'text/plain' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `DIA ${new Date().getDate()}.txt`;
-            a.click();
-            window.URL.revokeObjectURL(url);
-            mostrarAviso("DOWNLOAD CONCLUÍDO!");
-        }
-
-        function fecharModalPendencias() {
-            fecharModalAnim('modal-pendencias', 'modal-pendencias-content');
-        }
-
-        function toggleStatusDropdown() {
-            document.getElementById('status-dropdown').classList.toggle('open');
-        }
+        function abrirModalPendencias() { abrirModalAnim('modal-pendencias', 'modal-pendencias-content'); atualizarListaPendencias(false); }
+        function mostrarAviso(mensagem) { const toast = document.getElementById('toast-sucesso'); const toastText = document.getElementById('toast-text'); toastText.innerText = mensagem; toast.classList.remove('hidden'); setTimeout(() => { toast.classList.add('hidden'); }, 3000); }
+        function copiarTextoWhatsApp() { const texto = document.getElementById('container-texto-whatsapp').innerText; navigator.clipboard.writeText(texto).then(() => { mostrarAviso("TEXTO COPIADO!"); }); }
+        function downloadTextoPendencias() { const texto = document.getElementById('container-texto-whatsapp').innerText; const blob = new Blob([texto], { type: 'text/plain' }); const url = window.URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `Pendencias_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.txt`; a.click(); window.URL.revokeObjectURL(url); mostrarAviso("DOWNLOAD INICIADO!"); }
+        function fecharModalPendencias() { fecharModalAnim('modal-pendencias', 'modal-pendencias-content'); }
+        function toggleStatusDropdown() { document.getElementById('status-dropdown').classList.toggle('open'); }
 
         async function realizarLogin() {
             const input = document.getElementById('popup-token');
@@ -1215,48 +1039,20 @@
             const errorText = document.getElementById('error-text');
             const btn = document.getElementById('btn-login-acessar');
             const token = input.value.trim();
-            const dispararErro = (mensagem) => {
-                errorText.innerText = mensagem;
-                errorMsg.classList.remove('hidden', 'animate-shake');
-                void errorMsg.offsetWidth; errorMsg.classList.add('animate-shake');
-                input.classList.add('border-red-500', 'bg-red-50');
-                input.focus();
-            };
+            const dispararErro = (mensagem) => { errorText.innerText = mensagem; errorMsg.classList.remove('hidden', 'animate-shake'); void errorMsg.offsetWidth; errorMsg.classList.add('animate-shake'); input.classList.add('border-red-500', 'bg-red-50'); input.focus(); };
             if (!token) { dispararErro("Por favor, insira o token"); return; }
-            const originalText = btn.innerText;
-            btn.innerText = "CARREGANDO...";
-            btn.disabled = true;
+            const originalText = btn.innerText; btn.innerText = "CARREGANDO..."; btn.disabled = true;
             try {
-                const response = await fetch(`${API_ENDPOINT}/empresa`, {
-                    headers: { 'token': token, 'Content-Type': 'application/json' }
-                });
+                const response = await fetch(`${API_ENDPOINT}/empresa`, { headers: { 'token': token, 'Content-Type': 'application/json' } });
                 const data = await response.json();
                 if (response.status !== 200 || !data._id) throw new Error("Inválido");
-                errorMsg.classList.add('hidden');
-                input.classList.remove('border-red-500', 'bg-red-50');
-                sessionStorage.setItem('diario_token', token);
-                fecharModalAnim('login-overlay', 'login-content');
-                iniciarSincronizacao();
-            } catch (e) {
-                dispararErro("Token inválido ou expirado");
-                input.value = ""; 
-            } finally {
-                btn.innerText = originalText;
-                btn.disabled = false;
-            }
+                errorMsg.classList.add('hidden'); input.classList.remove('border-red-500', 'bg-red-50');
+                sessionStorage.setItem('diario_token', token); fecharModalAnim('login-overlay', 'login-content'); iniciarSincronizacao();
+            } catch (e) { dispararErro("Token inválido ou expirado"); input.value = ""; } finally { btn.innerText = originalText; btn.disabled = false; }
         }
 
         function sair() { sessionStorage.removeItem('diario_token'); location.reload(); }
-
-        async function apiCall(path) {
-            const token = sessionStorage.getItem('diario_token');
-            try {
-                const response = await fetch(`${API_ENDPOINT}${path}`, {
-                    headers: { 'token': token, 'Content-Type': 'application/json' }
-                });
-                return await response.json();
-            } catch (e) { return { error: true }; }
-        }
+        async function apiCall(path) { const token = sessionStorage.getItem('diario_token'); try { const response = await fetch(`${API_ENDPOINT}${path}`, { headers: { 'token': token, 'Content-Type': 'application/json' } }); return await response.json(); } catch (e) { return { error: true }; } }
 
         function getStatusConfig(statusObj) {
             const id = parseInt(statusObj?.id);
@@ -1281,10 +1077,7 @@
             const tag = document.getElementById('last-update-tag');
             if(tag) tag.innerText = "Sincronizando";
             if (isSilent) { if(syncIcon) syncIcon.classList.add('sync-spinning'); } 
-            else {
-                document.getElementById('loader').style.display = 'block';
-                document.getElementById('global-month-label').innerText = 'Carregando...';
-            }
+            else { document.getElementById('loader').style.display = 'block'; document.getElementById('global-month-label').innerText = 'Carregando...'; }
             const anoAtual = new Date().getFullYear();
             const inicioReq = "2010-01-01";
             const fimReq = `${anoAtual}-12-31`;
@@ -1294,70 +1087,50 @@
                 const dropdown = document.getElementById('status-dropdown');
                 dropdown.innerHTML = `<button onclick="filterByStatus('todos')" class="status-option">Todos os Status</button>`;
                 const statusUnicos = [...new Set(todasObras.map(o => o.status.descricao))].sort();
-                statusUnicos.forEach(st => {
-                    dropdown.innerHTML += `<button onclick="filterByStatus('${st}')" class="status-option">${st}</button>`;
-                });
+                statusUnicos.forEach(st => { dropdown.innerHTML += `<button onclick="filterByStatus('${st}')" class="status-option">${st}</button>`; });
                 syncSelectionWithFilters();
             }
             const results = await Promise.all(todasObras.map(async (obra) => {
                 const relsList = await apiCall(`/obras/${obra._id}/relatorios?dataInicio=${inicioReq}&dataFim=${fimReq}&limite=1000`);
                 return { obra, relsMes: Array.isArray(relsList) ? relsList : [] };
             }));
-            cachedData = results;
-            updateGlobalLabel();
+            cachedData = results; updateGlobalLabel();
             if(tag) tag.innerText = `Atualizado às ${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`;
             if (isSilent) { if(syncIcon) syncIcon.classList.remove('sync-spinning'); } 
             else { document.getElementById('loader').style.display = 'none'; }
-            render();
-            startTimer();
+            render(); startTimer();
         }
 
         function updateGlobalLabel() {
             const mesNome = globalViewDate.toLocaleString('pt-br', { month: 'long' });
             const ano = globalViewDate.getFullYear();
             document.getElementById('global-month-label').innerText = `${mesNome} ${ano}`;
-            
             let blockNext = (new Date(globalViewDate.getFullYear(), globalViewDate.getMonth(), 1) >= new Date(now.getFullYear(), now.getMonth(), 1));
-            if (periodoFim) {
-                const limiteFim = new Date(periodoFim.getFullYear(), periodoFim.getMonth(), 1, 12, 0, 0);
-                if (new Date(globalViewDate.getFullYear(), globalViewDate.getMonth(), 1, 12, 0, 0) >= limiteFim) blockNext = true;
-            }
+            if (periodoFim) { const limiteFim = new Date(periodoFim.getFullYear(), periodoFim.getMonth(), 1, 12, 0, 0); if (new Date(globalViewDate.getFullYear(), globalViewDate.getMonth(), 1, 12, 0, 0) >= limiteFim) blockNext = true; }
             document.getElementById('global-next-btn').disabled = blockNext;
-
             let blockPrev = false;
-            if (periodoInicio) {
-                const limiteIni = new Date(periodoInicio.getFullYear(), periodoInicio.getMonth(), 1, 12, 0, 0);
-                if (new Date(globalViewDate.getFullYear(), globalViewDate.getMonth(), 1, 12, 0, 0) <= limiteIni) blockPrev = true;
-            }
+            if (periodoInicio) { const limiteIni = new Date(periodoInicio.getFullYear(), periodoInicio.getMonth(), 1, 12, 0, 0); if (new Date(globalViewDate.getFullYear(), globalViewDate.getMonth(), 1, 12, 0, 0) <= limiteIni) blockPrev = true; }
             document.getElementById('global-prev-btn').disabled = blockPrev;
         }
 
         function changeGlobalMonth(offset) {
-            const newDate = new Date(globalViewDate);
-            newDate.setMonth(newDate.getMonth() + offset);
+            const newDate = new Date(globalViewDate); newDate.setMonth(newDate.getMonth() + offset);
             if (offset > 0) {
                 if (newDate > new Date(now.getFullYear(), now.getMonth(), 1, 23, 59, 59)) return;
                 if (periodoFim && newDate > new Date(periodoFim.getFullYear(), periodoFim.getMonth(), 1, 23, 59, 59)) return;
-            } else if (offset < 0) {
-                if (periodoInicio && newDate < newDate(periodoInicio.getFullYear(), periodoInicio.getMonth(), 1, 0, 0, 0)) return;
-            }
-            globalViewDate = newDate;
-            updateGlobalLabel();
-            render();
+            } else if (offset < 0) { if (periodoInicio && newDate < newDate(periodoInicio.getFullYear(), periodoInicio.getMonth(), 1, 0, 0, 0)) return; }
+            globalViewDate = newDate; updateGlobalLabel(); render();
         }
 
         async function triggerBackgroundOccurrenceCheck() {
-            const mesVisivel = globalViewDate.getMonth();
-            const anoVisivel = globalViewDate.getFullYear();
+            const mesVisivel = globalViewDate.getMonth(), anoVisivel = globalViewDate.getFullYear();
             const obrasVisiveis = cachedData.filter(res => selectedObraIds.has(res.obra._id) && res.obra.nome.toLowerCase().includes(globalSearchTerm));
             const syncPromises = [];
             for (const res of obrasVisiveis) {
                 const relsMap = {};
                 res.relsMes.forEach(r => {
-                    let dIn = parseDateSafely(r.data);
-                    let dOut = r.dataFim ? parseDateSafely(r.dataFim) : dIn;
-                    if (!dIn) return;
-                    let curr = new Date(dIn);
+                    let dIn = parseDateSafely(r.data), dOut = r.dataFim ? parseDateSafely(r.dataFim) : dIn;
+                    if (!dIn) return; let curr = new Date(dIn);
                     while (curr <= dOut) {
                         if (curr.getMonth() === mesVisivel && curr.getFullYear() === anoVisivel) {
                             const key = `${curr.getFullYear()}-${(curr.getMonth()+1).toString().padStart(2,'0')}-${curr.getDate().toString().padStart(2,'0')}`;
@@ -1376,12 +1149,7 @@
                                 if (relsMap[dateKey]._id === rId) {
                                     const [y, m, d] = dateKey.split('-').map(Number);
                                     const dayEl = document.getElementById(`day-${res.obra._id}-${d.toString().padStart(2,'0')}-${m.toString().padStart(2,'0')}-${y}`);
-                                    if (dayEl) {
-                                        const stripe = dayEl.querySelector('.stripe-alert');
-                                        if (hasOccurrences && !stripe) {
-                                            const s = document.createElement('div'); s.className = 'stripe-alert'; dayEl.appendChild(s);
-                                        } else if (!hasOccurrences && stripe) stripe.remove();
-                                    }
+                                    if (dayEl) { const stripe = dayEl.querySelector('.stripe-alert'); if (hasOccurrences && !stripe) { const s = document.createElement('div'); s.className = 'stripe-alert'; dayEl.appendChild(s); } else if (!hasOccurrences && stripe) stripe.remove(); }
                                 }
                             }
                         }
@@ -1394,76 +1162,36 @@
         function render() {
             const hiddenCount = todasObras.filter(o => manualOverrides[o._id] === false).length;
             const hiddenTag = document.getElementById('hidden-count-tag');
-            if (hiddenTag) {
-                if (hiddenCount > 0) {
-                    hiddenTag.innerText = `(${hiddenCount} OCULTA${hiddenCount !== 1 ? 'S' : ''})`;
-                    hiddenTag.classList.remove('hidden');
-                } else { hiddenTag.classList.add('hidden'); }
-            }
-            const container = document.getElementById('dashboard');
-            container.innerHTML = '';
+            if (hiddenTag) { if (hiddenCount > 0) { hiddenTag.innerText = `(${hiddenCount} OCULTA${hiddenCount !== 1 ? 'S' : ''})`; hiddenTag.classList.remove('hidden'); } else { hiddenTag.classList.add('hidden'); } }
+            const container = document.getElementById('dashboard'); container.innerHTML = '';
             const filtered = cachedData.filter(res => selectedObraIds.has(res.obra._id) && res.obra.nome.toLowerCase().includes(globalSearchTerm));
             filtered.sort((a, b) => {
-                const getPriority = (desc) => {
-                    const d = normalizeString(desc);
-                    if (d.includes("andamento")) return 1;
-                    if (d.includes("paralisada")) return 2;
-                    if (d.includes("nao iniciada")) return 3;
-                    if (d.includes("concluida")) return 4;
-                    return 5;
-                };
-                const pA = getPriority(a.obra.status.descricao);
-                const pB = getPriority(b.obra.status.descricao);
-                if (pA !== pB) return pA - pB;
-                return a.obra.nome.localeCompare(b.obra.nome);
+                const getPriority = (desc) => { const d = normalizeString(desc); if (d.includes("andamento")) return 1; if (d.includes("paralisada")) return 2; if (d.includes("nao iniciada")) return 3; if (d.includes("concluida")) return 4; return 5; };
+                const pA = getPriority(a.obra.status.descricao), pB = getPriority(b.obra.status.descricao);
+                if (pA !== pB) return pA - pB; return a.obra.nome.localeCompare(b.obra.nome);
             });
             const statusLabel = document.getElementById('current-status-label');
             if(statusLabel) statusLabel.innerText = `Status: ${selectedStatus === 'todos' ? 'Todos' : selectedStatus} (${filtered.length})`;
-            filtered.forEach(res => {
-                const wrapper = document.createElement('div');
-                wrapper.innerHTML = renderCalendarItemMarkup(res);
-                container.appendChild(wrapper);
-            });
+            filtered.forEach(res => { const wrapper = document.createElement('div'); wrapper.innerHTML = renderCalendarItemMarkup(res); container.appendChild(wrapper); });
             triggerBackgroundOccurrenceCheck();
         }
 
         function renderCalendarItemMarkup(res) {
-            const ano = globalViewDate.getFullYear();
-            const mes = globalViewDate.getMonth();
-            const primDiaSemana = new Date(ano, mes, 1).getDay();
-            const diasNoMes = new Date(ano, mes + 1, 0).getDate();
-            const realToday = new Date();
-            const relsMap = {};
+            const ano = globalViewDate.getFullYear(), mes = globalViewDate.getMonth();
+            const primDiaSemana = new Date(ano, mes, 1).getDay(), diasNoMes = new Date(ano, mes + 1, 0).getDate();
+            const realToday = new Date(), relsMap = {};
             const obraStyle = getObraStatusStyle(res.obra.status.descricao);
             res.relsMes.forEach(r => {
-                let dIn = parseDateSafely(r.data);
-                let dOut = r.dataFim ? parseDateSafely(r.dataFim) : dIn;
-                if (dIn) {
-                    let curr = new Date(dIn);
-                    while (curr <= dOut) {
-                        if (curr.getMonth() === mes && curr.getFullYear() === ano) {
-                            const key = `${curr.getFullYear()}-${(curr.getMonth()+1).toString().padStart(2,'0')}-${curr.getDate().toString().padStart(2,'0')}`;
-                            if (!relsMap[key] || getStatusConfig(r.status).priority > getStatusConfig(relsMap[key].status).priority) relsMap[key] = r;
-                        }
-                        curr.setDate(curr.getDate() + 1);
-                    }
-                }
+                let dIn = parseDateSafely(r.data), dOut = r.dataFim ? parseDateSafely(r.dataFim) : dIn;
+                if (dIn) { let curr = new Date(dIn); while (curr <= dOut) { if (curr.getMonth() === mes && curr.getFullYear() === ano) { const key = `${curr.getFullYear()}-${(curr.getMonth()+1).toString().padStart(2,'0')}-${curr.getDate().toString().padStart(2,'0')}`; if (!relsMap[key] || getStatusConfig(r.status).priority > getStatusConfig(relsMap[key].status).priority) relsMap[key] = r; } curr.setDate(curr.getDate() + 1); } }
             });
-            let html = `<div class="bg-white p-7 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col h-full"><div class="flex items-center justify-between mb-8">
-            <a href="https://web.diariodeobra.app/#/app/obras/${res.obra._id}/informacoes" target="_blank" title="${res.obra.nome}" class="font-black text-sm text-gray-800 truncate uppercase tracking-tighter w-4/5 cursor-pointer hover:text-green-700 transition-all">${res.obra.nome}</a>
-            <div class="flex items-center gap-2 shrink-0"><span class="text-[9px] font-black uppercase px-2 py-1 border rounded-md ${obraStyle}">${res.obra.status.descricao}</span><a href="${WEB_APP_BASE}${res.obra._id}/relatorios" target="_blank" class="btn-link-externo"><i class="fas fa-external-link-alt"></i></a></div></div><div class="calendar-grid mb-6"><div class="calendar-header-day">D</div><div class="calendar-header-day">S</div><div class="calendar-header-day">T</div><div class="calendar-header-day">Q</div><div class="calendar-header-day">Q</div><div class="calendar-header-day">S</div><div class="calendar-header-day">S</div>`;
+            let html = `<div class="bg-white p-7 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col h-full"><div class="flex items-center justify-between mb-8"><a href="https://web.diariodeobra.app/#/app/obras/${res.obra._id}/informacoes" target="_blank" title="${res.obra.nome}" class="font-black text-sm text-gray-800 truncate uppercase tracking-tighter w-4/5 cursor-pointer hover:text-green-700 transition-all">${res.obra.nome}</a><div class="flex items-center gap-2 shrink-0"><span class="text-[9px] font-black uppercase px-2 py-1 border rounded-md ${obraStyle}">${res.obra.status.descricao}</span><a href="${WEB_APP_BASE}${res.obra._id}/relatorios" target="_blank" class="btn-link-externo"><i class="fas fa-external-link-alt"></i></a></div></div><div class="calendar-grid mb-6"><div class="calendar-header-day">D</div><div class="calendar-header-day">S</div><div class="calendar-header-day">T</div><div class="calendar-header-day">Q</div><div class="calendar-header-day">Q</div><div class="calendar-header-day">S</div><div class="calendar-header-day">S</div>`;
             for (let i = 0; i < primDiaSemana; i++) html += `<div></div>`;
             const todayStr = `${realToday.getFullYear()}-${(realToday.getMonth()+1).toString().padStart(2,'0')}-${realToday.getDate().toString().padStart(2,'0')}`;
             for (let d = 1; d <= diasNoMes; d++) {
                 const dateKey = `${ano}-${(mes+1).toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}`;
-                const r = relsMap[dateKey];
-                const conf = getStatusConfig(r?.status);
-                const dataIdFormat = `${d.toString().padStart(2, '0')}-${(mes+1).toString().padStart(2, '0')}-${ano}`;
-                let weekendClass = "";
-                if (conf.css === "status-vazio") {
-                    const dSemana = new Date(ano, mes, d).getDay();
-                    if (dSemana === 6) weekendClass = "day-sabado"; else if (dSemana === 0) weekendClass = "day-domingo";
-                }
+                const r = relsMap[dateKey]; const conf = getStatusConfig(r?.status); const dataIdFormat = `${d.toString().padStart(2, '0')}-${(mes+1).toString().padStart(2, '0')}-${ano}`;
+                let weekendClass = ""; if (conf.css === "status-vazio") { const dSemana = new Date(ano, mes, d).getDay(); if (dSemana === 6) weekendClass = "day-sabado"; else if (dSemana === 0) weekendClass = "day-domingo"; }
                 html += `<div id="day-${res.obra._id}-${dataIdFormat}" onclick="if('${r?._id || ''}') openDetails('${res.obra._id}', '${res.obra.nome.replace(/'/g, "\\'")}', ${d}, ${mes}, ${ano}, '${r?._id || ''}')" class="calendar-day ${conf.css} ${weekendClass} ${dateKey === todayStr ? 'day-today' : ''}">${d}</div>`;
             }
             html += `</div><div class="mt-auto flex flex-wrap justify-center gap-x-6 gap-y-3 opacity-70"><div class="flex items-center gap-1.5 shrink-0"><div class="w-2.5 h-2.5 rounded-sm bg-[#15803d]"></div><span class="text-[8px] font-black uppercase text-gray-500 whitespace-nowrap">Aprovado</span></div><div class="flex items-center gap-1.5 shrink-0"><div class="w-2.5 h-2.5 rounded-sm bg-[#ef4444]"></div><span class="text-[8px] font-black uppercase text-gray-500 whitespace-nowrap">Revisar</span></div><div class="flex items-center gap-1.5 shrink-0"><div class="w-2.5 h-2.5 rounded-sm bg-[#fbbf24]"></div><span class="text-[8px] font-black uppercase text-gray-500 whitespace-nowrap">Pendente</span></div><div class="flex items-center gap-1.5 shrink-0"><div class="w-4 h-2.5 rounded-sm" style="background: repeating-linear-gradient(-45deg, #fbbf24, #fbbf24 4px, #000 4px, #000 8px);"></div><span class="text-[8px] font-black uppercase text-gray-500 whitespace-nowrap">Ocorrência</span></div></div></div>`;
@@ -1471,66 +1199,26 @@
         }
 
         async function openDetails(obraId, nomeObra, dia, mes, ano, reportId) {
-            lockScroll();
-            const displayDate = `${dia.toString().padStart(2, '0')}/${(mes + 1).toString().padStart(2, '0')}/${ano}`;
-            const obraRef = todasObras.find(o => o._id === obraId);
-            const obraStyle = getObraStatusStyle(obraRef?.status?.descricao || "");
+            lockScroll(); const displayDate = `${dia.toString().padStart(2, '0')}/${(mes + 1).toString().padStart(2, '0')}/${ano}`;
+            const obraRef = todasObras.find(o => o._id === obraId), obraStyle = getObraStatusStyle(obraRef?.status?.descricao || "");
             document.getElementById('side-obra-nome').innerText = nomeObra;
-            document.getElementById('side-obra-link-container').innerHTML = `
-                <span class="text-[9px] font-black uppercase px-2 py-1 border rounded-md ${obraStyle} mr-2">${obraRef?.status?.descricao || ""}</span>
-                <a href="${WEB_APP_BASE}${obraId}/relatorios/${reportId}" target="_blank" class="btn-link-externo"><i class="fas fa-external-link-alt"></i></a>
-            `;
-            document.getElementById('side-data').innerText = displayDate;
-            document.getElementById('side-overlay').classList.add('open');
-            document.getElementById('side-panel').classList.add('open');
+            document.getElementById('side-obra-link-container').innerHTML = `<span class="text-[9px] font-black uppercase px-2 py-1 border rounded-md ${obraStyle} mr-2">${obraRef?.status?.descricao || ""}</span><a href="${WEB_APP_BASE}${obraId}/relatorios/${reportId}" target="_blank" class="btn-link-externo"><i class="fas fa-external-link-alt"></i></a>`;
+            document.getElementById('side-data').innerText = displayDate; document.getElementById('side-overlay').classList.add('open'); document.getElementById('side-panel').classList.add('open');
             document.getElementById('side-refresh-btn').onclick = () => refreshSpecificReport(obraId, dia, mes, ano);
-            const cache = reportDetailsCache[reportId];
-            if (cache && cache.atividades) { renderDetailsContent(cache); } 
-            else { document.getElementById('side-content').innerHTML = `<div class="flex flex-col items-center justify-center py-20"><div class="w-8 h-8 border-4 border-green-700 border-t-transparent rounded-full animate-spin mb-4"></div><span class="text-[9px] font-black uppercase">Carregando dados técnicos...</span></div>`; }
-            try {
-                let det = await apiCall(`/obras/${obraId}/relatorios/${reportId}`);
-                if (det && !det.error) { reportDetailsCache[reportId] = det; renderDetailsContent(det); }
-            } catch (e) { console.error("Erro ao carregar detalhes", e); }
+            const cache = reportDetailsCache[reportId]; if (cache && cache.atividades) { renderDetailsContent(cache); } 
+            else { document.getElementById('side-content').innerHTML = `<div class="flex flex-col items-center justify-center py-20"><div class="w-8 h-8 border-4 border-green-700 border-t-transparent rounded-full animate-spin mb-4"></div><span class="text-[9px] font-black uppercase">Sincronizando...</span></div>`; }
+            try { let det = await apiCall(`/obras/${obraId}/relatorios/${reportId}`); if (det && !det.error) { reportDetailsCache[reportId] = det; renderDetailsContent(det); } } catch (e) { console.error("Erro ao carregar detalhes", e); }
         }
 
         async function refreshSpecificReport(obraId, dia, mes, ano) {
-            const btn = document.getElementById('side-refresh-btn');
-            const icon = btn.querySelector('i');
-            icon.classList.add('sync-spinning');
+            const btn = document.getElementById('side-refresh-btn'), icon = btn.querySelector('i'); icon.classList.add('sync-spinning');
             try {
                 const latestRels = await apiCall(`/obras/${obraId}/relatorios?dataInicio=2010-01-01&dataFim=${new Date().getFullYear()}-12-31&limite=1000&cb=${Date.now()}`);
-                if (Array.isArray(latestRels)) {
-                    const idx = cachedData.findIndex(r => r.obra._id === obraId);
-                    if (idx !== -1) cachedData[idx].relsMes = latestRels;
-                }
+                if (Array.isArray(latestRels)) { const idx = cachedData.findIndex(r => r.obra._id === obraId); if (idx !== -1) cachedData[idx].relsMes = latestRels; }
                 const targetKey = `${ano}-${(mes + 1).toString().padStart(2, '0')}-${dia.toString().padStart(2, '0')}`;
-                let winner = null;
-                const res = cachedData.find(r => r.obra._id === obraId);
-                if (res) {
-                    res.relsMes.forEach(r => {
-                        let dIn = parseDateSafely(r.data), dOut = r.dataFim ? parseDateSafely(r.dataFim) : dIn;
-                        let curr = new Date(dIn);
-                        while(curr <= dOut) {
-                            if (`${curr.getFullYear()}-${(curr.getMonth()+1).toString().padStart(2,'0')}-${curr.getDate().toString().padStart(2,'0')}` === targetKey) {
-                                if (!winner || getStatusConfig(r.status).priority > getStatusConfig(winner.status).priority) winner = r;
-                                break;
-                            }
-                            curr.setDate(curr.getDate() + 1);
-                        }
-                    });
-                }
-                if (winner) {
-                    let det = await apiCall(`/obras/${obraId}/relatorios/${winner._id}?cb=${Date.now()}`);
-                    if (det && !det.error) {
-                        reportDetailsCache[winner._id] = det; renderDetailsContent(det);
-                        const obraRef = todasObras.find(o => o._id === obraId);
-                        const obraStyle = getObraStatusStyle(obraRef?.status?.descricao || "");
-                        document.getElementById('side-obra-link-container').innerHTML = `
-                            <span class="text-[7px] font-black uppercase px-1.5 py-0.5 border rounded ${obraStyle} mr-2">${obraRef?.status?.descricao || ""}</span>
-                            <a href="${WEB_APP_BASE}${obraId}/relatorios/${winner._id}" target="_blank" class="btn-link-externo"><i class="fas fa-external-link-alt"></i></a>
-                        `;
-                    }
-                }
+                let winner = null; const res = cachedData.find(r => r.obra._id === obraId);
+                if (res) { res.relsMes.forEach(r => { let dIn = parseDateSafely(r.data), dOut = r.dataFim ? parseDateSafely(r.dataFim) : dIn; let curr = new Date(dIn); while(curr <= dOut) { if (`${curr.getFullYear()}-${(curr.getMonth()+1).toString().padStart(2,'0')}-${curr.getDate().toString().padStart(2,'0')}` === targetKey) { if (!winner || getStatusConfig(r.status).priority > getStatusConfig(winner.status).priority) winner = r; break; } curr.setDate(curr.getDate() + 1); } }); }
+                if (winner) { let det = await apiCall(`/obras/${obraId}/relatorios/${winner._id}?cb=${Date.now()}`); if (det && !det.error) { reportDetailsCache[winner._id] = det; renderDetailsContent(det); const obraRef = todasObras.find(o => o._id === obraId), obraStyle = getObraStatusStyle(obraRef?.status?.descricao || ""); document.getElementById('side-obra-link-container').innerHTML = `<span class="text-[7px] font-black uppercase px-1.5 py-0.5 border rounded ${obraStyle} mr-2">${obraRef?.status?.descricao || ""}</span><a href="${WEB_APP_BASE}${obraId}/relatorios/${winner._id}" target="_blank" class="btn-link-externo"><i class="fas fa-external-link-alt"></i></a>`; } }
                 render();
             } catch (e) { console.error(e); } finally { icon.classList.remove('sync-spinning'); }
         }
@@ -1538,53 +1226,21 @@
         function renderDetailsContent(det) {
             const conf = getStatusConfig(det.status);
             let html = `<div class="mb-8 p-4 rounded-2xl border-2 ${conf.text.replace('text', 'border')} ${conf.css.replace('status', 'bg')}/5 flex items-center justify-between"><span class="text-[10px] font-black uppercase text-gray-400 tracking-widest">Status Geral</span><span class="px-4 py-1.5 rounded-xl ${conf.css} text-[9px] font-black uppercase">${conf.label}</span></div>`;
-            
             const section = (icon, label, count, content) => `<details class="details-section"><summary><div class="flex items-center gap-3"><i class="${icon} text-green-700"></i>${label}</div><span>${count}</span></summary><div class="p-5 text-xs text-gray-600">${content}</div></details>`;
-            
             const padrao = det.maoDeObra?.padrao?.map(m => `<div class="flex justify-between py-1 border-b"><span>${m.descricao}</span><b>${m.quantidade}</b></div>`).join('') || '';
             const perso = det.maoDeObra?.personalizada?.map(m => `<div class="flex justify-between py-1 border-b"><span>${m.nome} <small class="text-gray-400">(${m.funcao})</small></span><b>1</b></div>`).join('') || '';
-            
             html += section('fas fa-users', 'Efetivo em Campo', (det.maoDeObra?.padrao?.length || 0) + (det.maoDeObra?.personalizada?.length || 0), (padrao + perso) || 'Nenhuma informação.');
-            
             html += section('fas fa-tractor', 'Maquinário', det.equipamentos?.length || 0, det.equipamentos?.map(e => `<div class="flex justify-between py-1 border-b"><span>${e.descricao}</span><b>${e.quantidade || 1}</b></div>`).join('') || 'Nenhum equipamento.');
-            
             html += section('fas fa-tasks', 'Serviços Executados', det.atividades?.length || 0, det.atividades?.map(a => `<div class="mb-2 pb-1 border-b"><b>${a.descricao}</b><br><small class="text-green-700 uppercase font-bold">${a.status?.descricao} - ${a.porcentagem}%</small></div>`).join('') || 'Nenhuma atividade.');
-
-            // NOVA SEÇÃO: COMENTÁRIOS
-            const comentariosConteudo = (det.comentarios && det.comentarios.length > 0)
-                ? det.comentarios.map(c => `
-                    <div class="mb-3 pb-2 border-b last:border-0">
-                        <div class="flex justify-between items-center mb-1">
-                            <b class="text-gray-800 uppercase text-[10px]">${c.usuario?.nome || 'Sistema'}</b>
-                            <span class="text-[9px] text-gray-400">${c.dataHora || ''}</span>
-                        </div>
-                        <p class="text-gray-600 italic">"${c.descricao}"</p>
-                    </div>
-                `).join('')
-                : 'Nenhum comentário registrado.';
-            
+            const comentariosConteudo = (det.comentarios && det.comentarios.length > 0) ? det.comentarios.map(c => `<div class="mb-3 pb-2 border-b last:border-0"><div class="flex justify-between items-center mb-1"><b class="text-gray-800 uppercase text-[10px]">${c.usuario?.nome || 'Sistema'}</b><span class="text-[9px] text-gray-400">${c.dataHora || ''}</span></div><p class="text-gray-600 italic">"${c.descricao}"</p></div>`).join('') : 'Nenhum comentário.';
             html += section('fas fa-comments', 'Comentários', det.comentarios?.length || 0, comentariosConteudo);
-
-            const fotosConteudo = (det.galeriaDeFotos && det.galeriaDeFotos.length > 0) 
-                ? `<div class="grid grid-cols-2 gap-2">${det.galeriaDeFotos.map(f => `<img src="${f.urlMiniatura || f.url}" class="w-full aspect-square object-cover rounded-xl" loading="lazy">`).join('')}</div>` 
-                : 'Nenhuma foto.';
-            
+            const fotosConteudo = (det.galeriaDeFotos && det.galeriaDeFotos.length > 0) ? `<div class="grid grid-cols-2 gap-2">${det.galeriaDeFotos.map(f => `<img src="${f.urlMiniatura || f.url}" class="w-full aspect-square object-cover rounded-xl" loading="lazy">`).join('')}</div>` : 'Nenhuma foto.';
             html += section('fas fa-camera', 'Galeria de Fotos', det.galeriaDeFotos?.length || 0, fotosConteudo);
-
-            if (det.ocorrencias?.length > 0) {
-                html += `<div class="mt-6 text-[9px] font-black text-red-500 uppercase tracking-widest mb-3">Ocorrências</div>`;
-                det.ocorrencias.forEach(o => { html += `<div class="p-4 bg-red-50 border border-red-100 rounded-2xl mb-2 text-xs font-bold text-red-700">${o.descricao}</div>`; });
-            }
-            
+            if (det.ocorrencias?.length > 0) { html += `<div class="mt-6 text-[9px] font-black text-red-500 uppercase tracking-widest mb-3">Ocorrências</div>`; det.ocorrencias.forEach(o => { html += `<div class="p-4 bg-red-50 border border-red-100 rounded-2xl mb-2 text-xs font-bold text-red-700">${o.descricao}</div>`; }); }
             document.getElementById('side-content').innerHTML = html;
         }
 
-        function closeDetails() { 
-            document.getElementById('side-overlay').classList.remove('open'); 
-            document.getElementById('side-panel').classList.remove('open'); 
-            unlockScroll(); 
-        }
-        
+        function closeDetails() { document.getElementById('side-overlay').classList.remove('open'); document.getElementById('side-panel').classList.remove('open'); unlockScroll(); }
         function startTimer() { if (autoRefreshInterval) clearInterval(autoRefreshInterval); autoRefreshInterval = setInterval(() => iniciarSincronizacao(true), 300000); }
 
         window.onclick = function(event) {
@@ -1597,18 +1253,10 @@
         }
 
         window.onload = () => {
-            lockScroll();
-            const overlay = document.getElementById('login-overlay');
-            const content = document.getElementById('login-content');
-            overlay.classList.add('modal-visible-state');
-            overlay.classList.remove('modal-hidden-state');
-            setTimeout(() => {
-                content.classList.add('modal-scale-show');
-                content.classList.remove('modal-scale-hide');
-            }, 100);
-            document.getElementById('popup-token').addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') { e.preventDefault(); realizarLogin(); }
-            });
+            lockScroll(); const overlay = document.getElementById('login-overlay'), content = document.getElementById('login-content');
+            overlay.classList.add('modal-visible-state'); overlay.classList.remove('modal-hidden-state');
+            setTimeout(() => { content.classList.add('modal-scale-show'); content.classList.remove('modal-scale-hide'); }, 100);
+            document.getElementById('popup-token').addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); realizarLogin(); } });
         };
     </script>
 </body>
