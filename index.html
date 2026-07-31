@@ -1,3 +1,5 @@
+--- START OF FILE index.html ---
+
 <!DOCTYPE html>
 <html lang="pt-br">
 
@@ -1029,7 +1031,19 @@
         function abrirModalPendencias() { abrirModalAnim('modal-pendencias', 'modal-pendencias-content'); atualizarListaPendencias(false); }
         function mostrarAviso(mensagem) { const toast = document.getElementById('toast-sucesso'); const toastText = document.getElementById('toast-text'); toastText.innerText = mensagem; toast.classList.remove('hidden'); setTimeout(() => { toast.classList.add('hidden'); }, 3000); }
         function copiarTextoWhatsApp() { const texto = document.getElementById('container-texto-whatsapp').innerText; navigator.clipboard.writeText(texto).then(() => { mostrarAviso("TEXTO COPIADO!"); }); }
-        function downloadTextoPendencias() { const texto = document.getElementById('container-texto-whatsapp').innerText; const blob = new Blob([texto], { type: 'text/plain' }); const url = window.URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `Pendencias_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.txt`; a.click(); window.URL.revokeObjectURL(url); mostrarAviso("DOWNLOAD INICIADO!"); }
+        
+        function downloadTextoPendencias() { 
+            const texto = document.getElementById('container-texto-whatsapp').innerText; 
+            const blob = new Blob([texto], { type: 'text/plain' }); 
+            const url = window.URL.createObjectURL(blob); 
+            const a = document.createElement('a'); 
+            a.href = url; 
+            a.download = `DIA ${new Date().getDate()}.txt`; 
+            a.click(); 
+            window.URL.revokeObjectURL(url); 
+            mostrarAviso("DOWNLOAD INICIADO!"); 
+        }
+
         function fecharModalPendencias() { fecharModalAnim('modal-pendencias', 'modal-pendencias-content'); }
         function toggleStatusDropdown() { document.getElementById('status-dropdown').classList.toggle('open'); }
 
