@@ -1117,21 +1117,64 @@
             const mesNome = globalViewDate.toLocaleString('pt-br', { month: 'long' });
             const ano = globalViewDate.getFullYear();
             document.getElementById('global-month-label').innerText = `${mesNome} ${ano}`;
-            let blockNext = (new Date(globalViewDate.getFullYear(), globalViewDate.getMonth(), 1) >= new Date(now.getFullYear(), now.getMonth(), 1));
-            if (periodoFim) { const limiteFim = new Date(periodoFim.getFullYear(), periodoFim.getMonth(), 1, 12, 0, 0); if (new Date(globalViewDate.getFullYear(), globalViewDate.getMonth(), 1, 12, 0, 0) >= limiteFim) blockNext = true; }
+            
+            // Normaliza a data atual da visualização para o dia 1 às 12h para comparação limpa
+            const currentMonthTime = new Date(globalViewDate.getFullYear(), globalViewDate.getMonth(), 1, 12, 0, 0).getTime();
+
+            // Lógica para desabilitar o botão PRÓXIMO
+            let blockNext = false;
+            // Bloqueia se for o mês atual real (não podemos ver o futuro)
+            const realTodayMonthTime = new Date(now.getFullYear(), now.getMonth(), 1, 12, 0, 0).getTime();
+            if (currentMonthTime >= realTodayMonthTime) {
+                blockNext = true;
+            }
+            // Se houver período final, bloqueia se chegar no limite do filtro
+            if (periodoFim) {
+                const limiteFimTime = new Date(periodoFim.getFullYear(), periodoFim.getMonth(), 1, 12, 0, 0).getTime();
+                if (currentMonthTime >= limiteFimTime) blockNext = true;
+            }
             document.getElementById('global-next-btn').disabled = blockNext;
+
+            // Lógica para desabilitar o botão ANTERIOR
             let blockPrev = false;
-            if (periodoInicio) { const limiteIni = new Date(periodoInicio.getFullYear(), periodoInicio.getMonth(), 1, 12, 0, 0); if (new Date(globalViewDate.getFullYear(), globalViewDate.getMonth(), 1, 12, 0, 0) <= limiteIni) blockPrev = true; }
+            // Se houver período inicial, bloqueia se chegar no limite inicial do filtro
+            if (periodoInicio) {
+                const limiteIniTime = new Date(periodoInicio.getFullYear(), periodoInicio.getMonth(), 1, 12, 0, 0).getTime();
+                if (currentMonthTime <= limiteIniTime) blockPrev = true;
+            } else {
+                // Se não houver filtro, bloqueia no ano de 2010 (limite do sistema)
+                if (globalViewDate.getFullYear() <= 2010 && globalViewDate.getMonth() <= 0) blockPrev = true;
+            }
             document.getElementById('global-prev-btn').disabled = blockPrev;
         }
 
         function changeGlobalMonth(offset) {
-            const newDate = new Date(globalViewDate); newDate.setMonth(newDate.getMonth() + offset);
+            const newDate = new Date(globalViewDate);
+            newDate.setMonth(newDate.getMonth() + offset);
+            newDate.setDate(1); // Garante que estamos no dia 1
+            newDate.setHours(12, 0, 0, 0); // Normaliza as horas
+
+            const newDateTime = newDate.getTime();
+
             if (offset > 0) {
-                if (newDate > new Date(now.getFullYear(), now.getMonth(), 1, 23, 59, 59)) return;
-                if (periodoFim && newDate > new Date(periodoFim.getFullYear(), periodoFim.getMonth(), 1, 23, 59, 59)) return;
-            } else if (offset < 0) { if (periodoInicio && newDate < newDate(periodoInicio.getFullYear(), periodoInicio.getMonth(), 1, 0, 0, 0)) return; }
-            globalViewDate = newDate; updateGlobalLabel(); render();
+                // Indo para o futuro: checar hoje e periodoFim
+                const realLimit = new Date(now.getFullYear(), now.getMonth(), 1, 12, 0, 0).getTime();
+                if (newDateTime > realLimit) return;
+                if (periodoFim) {
+                    const filterLimit = new Date(periodoFim.getFullYear(), periodoFim.getMonth(), 1, 12, 0, 0).getTime();
+                    if (newDateTime > filterLimit) return;
+                }
+            } else if (offset < 0) {
+                // Indo para o passado: checar periodoInicio
+                if (periodoInicio) {
+                    const filterLimit = new Date(periodoInicio.getFullYear(), periodoInicio.getMonth(), 1, 12, 0, 0).getTime();
+                    if (newDateTime < filterLimit) return;
+                }
+            }
+
+            globalViewDate = newDate;
+            updateGlobalLabel();
+            render();
         }
 
         async function triggerBackgroundOccurrenceCheck() {
